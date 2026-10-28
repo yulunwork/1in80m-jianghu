@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="《八千萬分之1 · 江湖蒼生錄》——致敬 1in8b.life（80億分之1）的金庸武俠人生模擬網頁遊戲。隨機降生為宋元明九州八千萬蒼生之一，在20大疆域門第的統計數據中，把僅此一次的江湖人生活到最後。">
+<meta name="theme-color" content="#8C1D3C">
+<title>八千萬分之1 · 江湖蒼生錄（致敬 1in8b.life 金庸武俠人生模擬）</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main id="app">
+  <!-- ==================== 首頁 (#intro) ==================== -->
+  <section id="intro">
+    <nav class="langsw" aria-label="頂部導覽與致敬資訊">
+      <span class="badge-homage">致敬 1in8b.life × 金庸武俠</span>
+      <a href="#intro" aria-current="page">繁體中文（江湖正統）</a>
+      <a href="https://1in8b.life/zh/" target="_blank" rel="noopener noreferrer" title="前往原作《80億分之1》官方網站">原作 1in8b.life ↗</a>
+      <button class="themebtn" id="themeBtn" type="button" aria-label="切換宣紙/水墨深淺主題" title="切換宣紙/水墨深淺主題">◐</button>
+    </nav>
+
+    <div class="wrap">
+      <div class="hero">
+        <div class="herotext">
+          <div class="kicker">
+            <span class="nw">v1.0.0 致敬紀念版 ·</span>
+            <span class="nw">免費武俠人生模擬 ·</span>
+            <span class="nw">根據戶部與江湖百曉生 20 大疆域門第統計 ·</span>
+            <span class="nw">免註冊即玩</span>
+          </div>
+          <h1>
+            八千萬分之<em>1</em>
+            <small class="sub-h1">金庸武俠 · 江湖蒼生錄</small>
+          </h1>
+          <p class="lede">
+            就在此刻，中原與塞外八千萬蒼生之間，每個呼吸都有嬰孩啼哭落地。你將成為其中一個，把僅此一次的江湖走到最後。
+            會降生在黃河災區的茅屋、襄陽孤城的箭樓，還是姑蘇慕容的水閣？沒有人能選擇自己的出身——在江湖裡，九成以上的人終其一生都沒見過《九陰真經》。
+          </p>
+
+          <div class="counter" aria-live="off">
+            <div>
+              <strong id="cBirth">0</strong>
+              <span>展開這卷竹簡後啼哭降生的嬰孩</span>
+            </div>
+            <div>
+              <strong id="cDeath">0</strong>
+              <span>同一段時間裡魂歸離恨天的蒼生</span>
+            </div>
+          </div>
+
+          <div class="tg-live">
+            <p class="tg-now"><i class="tg-dot" aria-hidden="true"></i><span>九州人間即時脈動（綠點：降生 · 紅點：離世）</span></p>
+            <p class="tg-feed" id="tgFeed">正在傾聽大宋與塞外二十州府的晨鐘暮鼓...</p>
+          </div>
+        </div>
+
+        <div class="heroside">
+          <div class="tg-bg">
+            <canvas id="tgMap" width="640" height="360" role="img" aria-label="以圓點標出九州各疆域人們降生與離世的動態輿圖"></canvas>
+            <div class="tg-map-cap">
+              <span>《九州江湖疆域與門派人口分佈輿圖》</span>
+              <span>1 dot = 即時生命事件</span>
+            </div>
+          </div>
+
+          <div class="odds">
+            <h2>如果你是此刻降生於江湖的嬰孩</h2>
+            <p class="sub">依各地與門第真實人口比例加權抽選（91% 黎民百姓 · 7.5% 江湖底層 · 1.5% 名門世家）</p>
+            <div id="oddsList"></div>
+            <div style="margin-top:12px">
+              <button type="button" class="ghost sm" id="allStatsBtn">查看全部 20 大疆域與門第統計清冊</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 開局設定區 -->
+      <div class="opts">
+        <div class="optgroup">
+          <span class="lbl">降生的江湖紀元</span>
+          <div class="seg" role="group" aria-label="降生的江湖紀元">
+            <button type="button" data-era="north_song" aria-pressed="false">北宋盛世（天龍）</button>
+            <button type="button" data-era="south_song" aria-pressed="true">南宋烽火（射鵰·神鵰）</button>
+            <button type="button" data-era="yuan_ming" aria-pressed="false">元末明初（倚天·笑傲）</button>
+            <button type="button" data-era="any" aria-pressed="false">任憑天命</button>
+          </div>
+          <span class="hint" id="eraHint">金元鐵騎相繼南下，中原板蕩，襄陽孤城血戰數十載。華山論劍五絕爭鋒，「俠之大者，為國為民」的悲壯年代。</span>
+        </div>
+
+        <div class="optgroup">
+          <span class="lbl">出身門第的抽選方式</span>
+          <div class="seg" role="group" aria-label="出身門第的抽選方式">
+            <button type="button" data-mode="birth" aria-pressed="true">此刻啼哭的嬰孩（出生率）</button>
+            <button type="button" data-mode="pop" aria-pressed="false">現存八千萬蒼生（人口比）</button>
+            <button type="button" data-mode="hero" aria-pressed="false">武林機緣加倍（俠客模式）</button>
+          </div>
+          <span class="hint">依出生率抽選時，河南與陝北貧苦農戶比例最高；若想提高抽中少林、武當、桃花島或慕容世家的機率，可選「武林機緣加倍」。</span>
+        </div>
+
+        <div class="optgroup">
+          <span class="lbl">一段江湖人生的節奏</span>
+          <div class="seg" role="group" aria-label="一段江湖人生的節奏">
+            <button type="button" data-pace="15" aria-pressed="false">疾風（約15分鐘）</button>
+            <button type="button" data-pace="30" aria-pressed="true">標準（約30分鐘）</button>
+            <button type="button" data-pace="60" aria-pressed="false">細品（約1小時）</button>
+          </div>
+          <span class="hint">過程中隨時可切換 1× 至 16× 倍速、暫停，或直接「快轉到下一個抉擇」。</span>
+        </div>
+
+        <div class="optgroup">
+          <span class="lbl">你現實生活的地區（選填，用於結算跨時空對照）</span>
+          <select id="homeSel" class="sel" aria-label="你現實生活的地區"></select>
+          <span class="hint">命終結算時，會將你這具江湖肉身的壽元、所得與現代世界並排對照。</span>
+        </div>
+
+        <div class="ctarow">
+          <button type="button" class="cta" id="startBtn">降生江湖</button>
+          <span class="ctahint">設定不用改，直接降生也沒關係。</span>
+          <button type="button" class="ghost" data-music="1" aria-pressed="false">♪ 古琴雅樂</button>
+        </div>
+      </div>
+
+      <!-- 江湖追思祠 -->
+      <div class="community" id="memoBox">
+        <h2>江湖追思祠</h2>
+        <p class="cm-sub">這裡安放著走到最後的江湖人生。無論是一代宗師還是無名農夫，都值得點一炷清香。</p>
+        <div class="memo-grid" id="memoGrid"></div>
+      </div>
+
+      <!-- 前世輪迴錄 -->
+      <div class="pastlives" id="pastLives" hidden>
+        <div class="panel">
+          <h3><span>前世輪迴錄</span><span class="lbl" id="pastSum"></span></h3>
+          <ul class="pl-list" id="pastBody"></ul>
+        </div>
+      </div>
+
+      <!-- 致敬與設計說明三欄 -->
+      <div class="notes">
+        <div>
+          <h3>在同一時辰啼哭的五個人</h3>
+          <p>在你降生的那個時辰，九州大地與塞外草原也有其他嬰孩誕生。其中四個人的人生會依照同樣的統計走到最後，並列在你的人生旁邊。有人生於燕子塢錦衣玉食，有人未滿五歲便夭折於黃河水患。</p>
+        </div>
+        <div>
+          <h3>駐足片刻 · 叩問本心</h3>
+          <p>在 7 歲、16 歲、30 歲、50 歲與 70 歲時，時間會停下來向你提出一個問題。把這位江湖客的命途與你自己的人生放在一起想一想，留下一行字，最後收錄進你的《江湖命終卷宗》。</p>
+        </div>
+        <div>
+          <h3>哪些是統計與考據資料</h3>
+          <p>結合宋元明歷史人口地理學（預期壽命 38–62 歲、嬰幼兒高夭折率、糧價與白銀購買力平價 PPP）以及金庸十五部經典之門派地理分佈。數值高低只會提高化險為夷或突破境界的機率，無法完全抹除時代與出身的限制。</p>
+        </div>
+      </div>
+
+      <p class="fine">
+        <b>致敬聲明：</b>本作品為致敬南韓獨立開發者 <b>Jin's Earth</b> 所創作之網頁遊戲《<a href="https://1in8b.life/zh/" target="_blank" rel="noopener noreferrer">80億分之1 (1in8b.life)</a>》與查良鏞先生（金庸）武俠小說世界的非營利致敬創作。如果不喜歡做決定，進入遊戲後可開啟上方工具列的「<b>自動抉擇</b>」，靜靜觀看一個人如何在江湖的統計洪流裡走完一生。
+      </p>
+    </div>
+  </section>
+
+  <!-- ==================== 投胎抽選與官府戶帖 (#roll) ==================== -->
+  <section id="roll" class="wrap" hidden>
+    <div class="roller" id="roller">
+      <div class="lbl">正在翻閱《戶部魚鱗冊》決定降生疆域與門第...</div>
+      <div class="country" id="rollName" aria-live="polite">河南府 · 黃河農戶</div>
+      <div class="meta" id="rollMeta">中原腹地 · 黎民佃農</div>
+    </div>
+
+    <div class="cert" id="cert" hidden>
+      <div class="band">
+        <b>官府戶帖 · 出生登記</b>
+        <span id="certNo"></span>
+      </div>
+      <div class="body">
+        <div class="lbl">姓名與性別</div>
+        <h2 id="certName"></h2>
+        <p class="story" id="certStory"></p>
+        <div class="fields" id="certFields"></div>
+        <figure class="certmap" style="margin:16px 0 0;text-align:center">
+          <canvas id="certMap" width="480" height="250" style="max-width:100%;height:auto;border:1px solid var(--rule);border-radius:4px"></canvas>
+        </figure>
+        <div class="odds-line" id="certOdds"></div>
+        <div class="certcomps" id="certComps"></div>
+      </div>
+      <div class="foot">
+        <button type="button" class="ghost" id="certCardBtn">下載出生戶帖圖卡</button>
+        <button type="button" class="cta" id="beginBtn">踏入這一生 »</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 江湖人生主畫面 (#lifeview) ==================== -->
+  <section id="lifeview" hidden>
+    <header class="topbar">
+      <div class="wrap">
+        <div class="brand">八千萬分之<em>1</em></div>
+        <div class="agebox">
+          <div class="age" id="ageNum">0<small>歲</small></div>
+          <div class="yr">
+            <span class="t" id="ageYear"></span>
+            <div class="prog" aria-hidden="true"><i id="prog"></i></div>
+          </div>
+        </div>
+        <div class="speed" role="group" aria-label="時間流速與工具列">
+          <button type="button" id="pauseBtn" aria-pressed="false">❚❚ 暫停</button>
+          <span id="spSet" style="display:inline-flex;gap:3px">
+            <button type="button" data-speed="1" aria-pressed="true">1×</button>
+            <button type="button" data-speed="2" aria-pressed="false">2×</button>
+            <button type="button" data-speed="4" aria-pressed="false">4×</button>
+            <button type="button" data-speed="8" aria-pressed="false">8×</button>
+            <button type="button" data-speed="16" aria-pressed="false">16×</button>
+          </span>
+          <button type="button" class="ff" id="ffBtn" aria-pressed="false" title="加速快轉直到遇見下一個重大抉擇">快轉至抉擇 »</button>
+          <button type="button" class="ff" id="autoBtn" aria-pressed="false" title="開啟後系統自動做出抉擇，適合旁觀人生">自動抉擇</button>
+          <button type="button" class="ff" id="goShop" title="使用積蓄紋銀購買丹藥、兵刃、秘笈或置辦田產">銀兩 · 置產</button>
+          <button type="button" class="ff" data-music="1" aria-pressed="false" title="古琴五聲背景雅樂">♪ 古琴</button>
+          <button type="button" class="ff" id="pauseQ" aria-pressed="true" title="在7、16、30、50、70歲時駐足提問">✎ 省思</button>
+          <button type="button" class="ff" id="themeBtn2" title="切換明暗主題">◐</button>
+          <button type="button" class="ff" id="quitBtn" title="返回首頁">離開</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="wrap life">
+      <!-- 左欄：身契 ID 卡、四維狀態與銀兩、家眷師門 -->
+      <div class="col">
+        <div class="panel idcard p-id">
+          <div class="top" id="idTop"></div>
+          <div class="in">
+            <div class="portrait" id="portrait"></div>
+            <div style="min-width:0">
+              <div class="nm" id="idName"></div>
+              <dl id="idDl"></dl>
+            </div>
+          </div>
+          <div class="mrz" id="mrz"></div>
+        </div>
+
+        <div class="panel p-stats">
+          <h3><span>狀態與修為</span><span class="lbl">0–100</span></h3>
+          <div id="statBars"></div>
+          <details class="stathelp">
+            <summary>這四項狀態代表什麼？</summary>
+            <ul>
+              <li><b>體魄</b> 氣血與外傷抵禦力。影響壽元、疫病存活率與高齡衰竭速度。</li>
+              <li><b>心境</b> 道心與生活滿足度。過低易生心魔或鬱結；高則能逢凶化吉。</li>
+              <li><b>武學</b> 內外功造詣與見識。決定江湖境界（手無寸鐵→絕頂宗師），受出身門第與奇遇影響極大。</li>
+              <li><b>情義</b> 與雙親、伴侶、師門及江湖同道的連結。危難時影響有無義士相助。</li>
+            </ul>
+            <p style="margin:4px 0 0;color:var(--ink3)">如同原作《80億分之1》，數值高只會提高好結果的機率，無法完全凌駕於時代兵燹與統計宿命之上。</p>
+          </details>
+          <div class="money" id="money"></div>
+          <div class="spend" id="spend"></div>
+        </div>
+
+        <div class="panel p-fam">
+          <h3><span>家眷與師門羈絆</span></h3>
+          <div class="fam" id="fam"></div>
+        </div>
+      </div>
+
+      <!-- 中欄：像素水墨場景、今年重心、生平竹簡紀錄 -->
+      <div class="col">
+        <div class="panel p-scene">
+          <div class="scene" id="scene" role="img" aria-label="此刻的江湖人生樣貌"></div>
+          <p class="scenecap" id="sceneCap"></p>
+        </div>
+
+        <div class="panel p-focus">
+          <h3><span>今年的重心</span><span class="lbl">隨時可以更改</span></h3>
+          <div class="status" id="status"></div>
+          <div class="chips" id="focusChips"></div>
+        </div>
+
+        <div class="panel p-feed">
+          <h3>
+            <span>生平竹簡紀錄</span>
+            <span class="lbl">最新在前 · 點擊任一行可標記 ★ 收錄至謝世走馬燈</span>
+          </h3>
+          <ul class="feed" id="feed" aria-live="polite"></ul>
+        </div>
+      </div>
+
+      <!-- 右欄：同辰五人、生平年表方格、存活曲線、疆域統計 -->
+      <div class="col col3">
+        <div class="panel p-comps">
+          <h3><span>同一時辰降生的蒼生</span><span class="lbl">此刻，在同樣的年紀</span></h3>
+          <ul class="comps" id="compList"></ul>
+        </div>
+
+        <div class="panel p-grid">
+          <h3><span>生平年表地圖</span><span class="lbl">一格 = 1年（細框為當地平均壽元）</span></h3>
+          <div class="grid10" id="grid"></div>
+          <div class="gridkey">
+            <span><i style="background:var(--grid-lo)"></i>困頓憂患</span>
+            <span><i style="background:var(--grid-mid)"></i>平順安康</span>
+            <span><i style="background:var(--grid-hi)"></i>意氣風發</span>
+            <span><i style="background:var(--loss)"></i>命終</span>
+          </div>
+        </div>
+
+        <div class="panel p-chart">
+          <h3><span>同輩存活曲線</span><span class="lbl">同年降生者仍存活於世的比例</span></h3>
+          <div class="chart" id="chart"></div>
+          <div class="legend">
+            <span><i style="background:var(--stamp)"></i>本疆域存活率</span>
+            <span><i style="background:var(--ink3)"></i>中原平均基準</span>
+          </div>
+        </div>
+
+        <div class="panel stats p-cty">
+          <h3><span id="ctyTitle">疆域統計</span></h3>
+          <dl id="ctyDl"></dl>
+          <div class="src">
+            資料模型來源：《宋史·地理志》、《元史·食貨志》、Maddison Project 歷史人均 GDP 估計、WHO 高死亡率歷史生命表模型，以及金庸十五部武俠作品門派地域統計。介面與機制致敬 1in8b.life。
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 命終卷宗結算頁 (#dead) ==================== -->
+  <section id="dead" class="wrap" hidden></section>
+</main>
+
+<!-- 抉擇 / 省思 / 置產視窗 -->
+<div id="modal" class="scrim" hidden></div>
+
+<!-- 縮小後的待處理抉擇提示條 -->
+<div class="decpeek" id="decPeek" role="region" aria-label="等待中的江湖抉擇" hidden>
+  <span class="dp-t">
+    <b>有一個江湖抉擇正在等你</b>
+    <small id="decPeekT"></small>
+  </span>
+  <button type="button" class="cta sm" id="decOpen">重新展開</button>
+</div>
+
+<!-- 謝世走馬燈全螢幕劇場 -->
+<div class="ending" id="endingOverlay" hidden>
+  <button type="button" class="end-skip" id="endSkipBtn">略過走馬燈 »</button>
+  <div class="end-stage">
+    <div class="end-pic" id="endPic"></div>
+    <div class="end-age" id="endAge"></div>
+    <p class="end-text" id="endText"></p>
+    <div class="end-strip" id="endStrip"></div>
+  </div>
+</div>
+
+<!-- 底部通知 Toast -->
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="data.js"></script>
+<script src="canvas.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
