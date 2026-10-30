@@ -4,7 +4,7 @@
   const DATA = window.JIANGHU_DATA;
 
   const cfg = {
-    era: 'south_song',
+    era: 'any',
     mode: 'birth',
     pace: 30,
     home: 'tw',
@@ -184,7 +184,7 @@
   function createNewLife() {
     let eraKey = cfg.era;
     if (eraKey === 'any') {
-      eraKey = pick(['north_song', 'south_song', 'yuan_ming']);
+      eraKey = pick(['north_song', 'south_song', 'yuan_ming', 'qing_jianghu']);
     }
     const eraObj = DATA.ERAS[eraKey];
     const birthYear = eraObj.years[0] + Math.floor(Math.random() * (eraObj.years[1] - eraObj.years[0]));
@@ -256,6 +256,7 @@
       grid: [],
       trail: [[region.coords[0], region.coords[1]]],
       usedDecisions: {},
+      usedMishaps: {},
       reflections: {}
     };
   }
@@ -636,9 +637,15 @@
       return;
     }
 
-    // 方案一：36% 機率觸發「大俠打架我買單 / 江湖路人甲荒謬際遇」
-    if (DATA.NPC_MISHAPS && roll < 0.36) {
-      const m = pick(DATA.NPC_MISHAPS);
+    // 方案一：38% 機率觸發「大俠打架我買單 / 十四天書路人甲荒謬際遇」（同生不重複）
+    if (DATA.NPC_MISHAPS && roll < 0.38) {
+      life.usedMishaps = life.usedMishaps || {};
+      const unused = DATA.NPC_MISHAPS.filter((_, idx) => !life.usedMishaps[idx]);
+      const pool = unused.length > 0 ? unused : DATA.NPC_MISHAPS;
+      const m = pick(pool);
+      const mIdx = DATA.NPC_MISHAPS.indexOf(m);
+      if (mIdx >= 0) life.usedMishaps[mIdx] = true;
+
       const fx = m.fx || {};
       if (fx.health)  life.stats.health  = clamp(life.stats.health + fx.health);
       if (fx.mind)    life.stats.mind    = clamp(life.stats.mind + fx.mind);
@@ -1393,6 +1400,16 @@
       };
     }
 
+    if (l.topArt && l.topArt.includes('太玄經')) {
+      return {
+        rarity: 'UR',
+        rarityLabel: 'UR · 文盲天尊',
+        color: '#F5C451',
+        title: '【靠不識字練成神功的文盲奇才】',
+        roast: '滿島老學究皓首窮經都參不透的蝌蚪文，你因為壓根沒上過私塾、把它當成麵條跟蚯蚓看，居然誤打誤撞神功大成！知識有時候真的是力量，但沒文化在俠客島卻是無敵。'
+      };
+    }
+
     if (l.topArt && l.topArt.includes('蛤蟆')) {
       return {
         rarity: 'SR',
@@ -1400,6 +1417,16 @@
         color: '#D4A359',
         title: '【村口趴著呱呱叫的狠人】',
         roast: '掌力確實剛猛無儔，唯一遺憾是每次對敵前都得趴在泥地上鼓腮幫子學青蛙叫。死後方圓十里的野狗跟蟾蜍都來替你送行。'
+      };
+    }
+
+    if (l.topArt && (l.topArt.includes('躺屍') || l.topArt.includes('滾動'))) {
+      return {
+        rarity: 'SR',
+        rarityLabel: 'SR · 苟命宗師',
+        color: '#D4A359',
+        title: '【躺平翻滾界的武學泰斗】',
+        roast: '別人練武講究氣吞山河，你練武講究「只要我躺得夠快、滾得夠圓，敵人的刀就追不上我」。姿勢雖然毫無尊嚴，但能多苟活幾年就是真本事。'
       };
     }
 
@@ -1413,7 +1440,7 @@
       };
     }
 
-    if (/喬峰|梅超風|六大派|斷劍|李莫愁|星宿|玉蜂|牌匾/.test(cause)) {
+    if (/喬峰|梅超風|六大派|斷劍|李莫愁|星宿|玉蜂|牌匾|韋小寶|田伯光|東方不敗|血刀|金輪法王|胡斐|謝遜/.test(cause)) {
       return {
         rarity: 'R',
         rarityLabel: 'R · 氣氛耗材',
@@ -1906,7 +1933,7 @@
         btn.setAttribute('aria-pressed', 'true');
         cfg.era = btn.dataset.era;
         const eObj = DATA.ERAS[cfg.era];
-        $('eraHint').textContent = eObj ? eObj.hint : '任憑天命隨機降生於北宋、南宋或元末明初的江湖。';
+        $('eraHint').textContent = eObj ? eObj.hint : '任憑天命隨機降生於「飛雪連天射白鹿，笑書神俠倚碧鴛」十四部天書交織的歷代江湖。';
       });
     });
 

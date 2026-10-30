@@ -422,6 +422,24 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
   white-space: nowrap;
 }
 .seg button + button { border-left: 1px solid var(--rule); }
+.seg.seg-era {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.seg.seg-era button {
+  border-top: 1px solid var(--rule);
+  white-space: normal;
+  line-height: 1.3;
+}
+.seg.seg-era button.seg-full {
+  grid-column: 1 / -1;
+  border-top: 0;
+  border-left: 0;
+  font-size: 14.5px;
+}
+.seg.seg-era button:nth-child(even) {
+  border-left: 0;
+}
 .seg button[aria-pressed="true"] {
   background: var(--wood-mid);
   color: #FDF8EE;
