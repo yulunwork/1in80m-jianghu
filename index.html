@@ -9,69 +9,76 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<main id="app">
-  <!-- 頂部宋刻本古籍書眉導覽列 -->
-  <header class="book-header">
-    <div class="wrap">
-      <div class="bh-left">
-        <span class="seal-stamp">百曉生纂</span>
-        <span>《江湖蒼生錄》卷一 · 宋元明武林與黎庶考</span>
-      </div>
-      <div class="bh-right">
-        <button type="button" class="wood-pill" data-music="1" aria-pressed="false">♪ 撫響古琴</button>
-        <button type="button" class="wood-pill" id="themeBtn" title="切換「宋刻宣紙」與「夜雨客棧」主題">◐ 宣紙 / 夜棧</button>
-      </div>
-    </div>
-  </header>
+<!-- 左側固定直排《烏木書籤匣》：取代原版右上角導覽與音樂鈕 -->
+<aside class="side-dock" aria-label="案頭書籤與雅樂控制">
+  <div class="sd-brand">
+    <span class="seal-stamp">百曉</span>
+    <span class="sd-vert-title">江湖蒼生錄</span>
+  </div>
+  <div class="sd-controls">
+    <button type="button" class="sd-btn" data-music="1" aria-pressed="false" title="撫響/止息古琴五聲雅樂">
+      <span class="sd-ico">琴</span>
+      <span class="sd-txt">古琴</span>
+    </button>
+    <button type="button" class="sd-btn" id="themeBtn" title="切換「宋刻宣紙」與「夜雨客棧」明暗">
+      <span class="sd-ico">燈</span>
+      <span class="sd-txt">燭火</span>
+    </button>
+    <button type="button" class="sd-btn" id="allStatsBtn" title="翻閱《九州二十州府與門第清冊》">
+      <span class="sd-ico">冊</span>
+      <span class="sd-txt">州府</span>
+    </button>
+  </div>
+</aside>
 
-  <!-- ==================== 首頁：古籍書卷與沙盤 (#intro) ==================== -->
+<main id="app" class="with-dock">
+  <!-- ==================== 首頁：全景沙盤與三折奏摺案頭 (#intro) ==================== -->
   <section id="intro">
     <div class="wrap">
-      <!-- 卷首牌匾橫幅 -->
-      <div class="scroll-banner">
-        <div class="title-block">
-          <div class="vert-couplet">飛雪連天射白鹿 · 笑書神俠倚碧鴛</div>
-          <div class="title-main">
-            <span class="sub-h1">書劍江山 · 人間煙火模擬錄</span>
+      <!-- 頂部：全景《九州山河武林沙盤》舞台（地圖置頂居中，牌匾與生死簿鑲嵌其上） -->
+      <div class="pano-stage">
+        <div class="pano-map-wrap">
+          <canvas id="tgMap" width="860" height="340" role="img" aria-label="九州山河與門派分佈水墨輿圖"></canvas>
+          <!-- 左側疊加：古籍立軸書名牌匾 -->
+          <div class="pano-overlay-left">
+            <div class="sub-kicker">書劍江山 · 宋元明武林人間考</div>
             <h1>江湖蒼生錄<em>八千萬眾</em></h1>
             <p class="lede">
-              廟堂之上，萬乘之尊；江湖之中，八千萬眾。刀光劍影不過百里，人間煙火卻綿延萬里。
-              在這裡，九成以上的人終其一生都未曾見過《九陰真經》——你或許生於黃河岸邊的夯土茅屋、襄陽孤城的箭樓，又或許偶入少林武當門牆。落子無悔，且看你如何走完這一世江湖。
+              廟堂之上，萬乘之尊；江湖之中，八千萬眾。<br>
+              刀光劍影不過百里，人間煙火卻綿延萬里——在這裡，九成以上的人終生未見《九陰真經》。落子無悔，且看你此生落於何處。
             </p>
           </div>
-        </div>
-
-        <div>
-          <div class="tally-plaques" aria-live="off">
+          <!-- 右下疊加：陰陽生死木牌 -->
+          <div class="pano-overlay-right" aria-live="off">
             <div class="plaque yang">
-              <span class="pq-lbl">【陽冊 · 新添丁口】</span>
+              <span class="pq-lbl">陽冊添丁</span>
               <strong id="cBirth">0</strong>
-              <small>展卷至今啼哭落地之嬰孩</small>
             </div>
             <div class="plaque yin">
-              <span class="pq-lbl">【陰冊 · 魂歸離恨】</span>
+              <span class="pq-lbl">陰冊歸塵</span>
               <strong id="cDeath">0</strong>
-              <small>同一時辰長辭人世之蒼生</small>
             </div>
           </div>
         </div>
-
         <div class="tg-live">
-          <p class="tg-now"><i class="tg-dot" aria-hidden="true"></i><span>九州人間生息感應（青點：添丁 · 朱點：辭世）</span></p>
-          <p class="tg-feed" id="tgFeed">正在傾聽九州二十州府的晨鐘暮鼓與市井喧囂...</p>
+          <span class="tg-now"><i class="tg-dot" aria-hidden="true"></i> 九州驛報：</span>
+          <span class="tg-feed" id="tgFeed">正在傾聽九州二十州府的晨鐘暮鼓與市井喧囂...</span>
         </div>
       </div>
 
-      <!-- 對開雙欄：左「入世命盤設定」，右「九州山河輿圖與百曉生門第譜」 -->
-      <div class="intro-grid">
-        <div class="scroll-box">
-          <h2>
-            <span>卷甲 · 落子入世命盤</span>
-            <span class="seal-stamp">天命難違</span>
-          </h2>
-          <div class="opts">
+      <!-- 中央案頭：分頁書籤切換（【壹·落子設壇】 / 【貳·九州門第譜】 / 【參·忠烈碑林與往生錄】） -->
+      <div class="desk-tabs" role="tablist" aria-label="首頁書卷分頁">
+        <button type="button" class="dtab active" data-introt="altar" role="tab" aria-selected="true">卷一 · 落子設壇（開局命盤）</button>
+        <button type="button" class="dtab" data-introt="hierarchy" role="tab" aria-selected="false">卷二 · 九州門第譜（出身比重）</button>
+        <button type="button" class="dtab" data-introt="memorial" role="tab" aria-selected="false">卷三 · 忠烈碑林與往生列傳</button>
+      </div>
+
+      <!-- 分頁一：落子設壇（2x2 命格羅盤陣 + 中央蓋印大鈕） -->
+      <div class="intro-pane" id="pane-altar">
+        <div class="altar-box">
+          <div class="altar-grid">
             <div class="optgroup">
-              <span class="lbl">壹 · 擇定降生之江湖紀元</span>
+              <span class="lbl">【天時 · 降生之江湖紀元】</span>
               <div class="seg" role="group" aria-label="降生的江湖紀元">
                 <button type="button" data-era="north_song" aria-pressed="false">北宋（天龍）</button>
                 <button type="button" data-era="south_song" aria-pressed="true">南宋（射鵰·神鵰）</button>
@@ -82,91 +89,87 @@
             </div>
 
             <div class="optgroup">
-              <span class="lbl">貳 · 出身門第之命格比重</span>
+              <span class="lbl">【地利 · 出身門第之命格】</span>
               <div class="seg" role="group" aria-label="出身門第的抽選方式">
-                <button type="button" data-mode="birth" aria-pressed="true">依戶部添丁率（寫實蒼生）</button>
-                <button type="button" data-mode="pop" aria-pressed="false">依九州現存丁口</button>
-                <button type="button" data-mode="hero" aria-pressed="false">武林機緣加倍（俠客傳奇）</button>
+                <button type="button" data-mode="birth" aria-pressed="true">寫實蒼生（戶部添丁）</button>
+                <button type="button" data-mode="pop" aria-pressed="false">現存丁口比例</button>
+                <button type="button" data-mode="hero" aria-pressed="false">武林機緣加倍（俠客）</button>
               </div>
-              <span class="hint">寫實蒼生模式下，九成為黎民百姓；若想提高拜入少林、武當、桃花島或生於慕容世家的機緣，可選「武林機緣加倍」。</span>
+              <span class="hint">寫實蒼生下九成為黎民百姓；若想提高拜入名門正派、桃花島或生於武林世家的機緣，可選「武林機緣加倍」。</span>
             </div>
 
             <div class="optgroup">
-              <span class="lbl">參 · 歲月流轉之快慢</span>
+              <span class="lbl">【歲月 · 銅壺滴漏之快慢】</span>
               <div class="seg" role="group" aria-label="一段江湖人生的節奏">
                 <button type="button" data-pace="15" aria-pressed="false">白駒過隙（約15分）</button>
                 <button type="button" data-pace="30" aria-pressed="true">寒暑常態（約30分）</button>
                 <button type="button" data-pace="60" aria-pressed="false">細品浮生（約1小時）</button>
               </div>
-              <span class="hint">入世後隨時可切換一至十六倍速、駐馬暫停，或「策馬直奔下一個機緣」。</span>
+              <span class="hint">入世後可隨時於底部案頭切換一至十六倍速、駐馬暫停，或策馬直奔機緣。</span>
             </div>
 
             <div class="optgroup">
-              <span class="lbl">肆 · 今生所處之地（選填，蓋棺時作古今對照）</span>
+              <span class="lbl">【古今 · 今生所處之地（蓋棺對照）】</span>
               <select id="homeSel" class="sel" aria-label="今生所處之地"></select>
-              <span class="hint">蓋棺立傳時，將以此世之陽壽、歲入紋銀與你今生所處的現代社會並排考據。</span>
+              <span class="hint">立傳結算時，將以此世之陽壽、歲入紋銀與你今生所處的現代社會並排考據。</span>
             </div>
+          </div>
 
-            <div class="ctarow">
-              <button type="button" class="cta" id="startBtn">【蓋印入世 · 落子江湖】</button>
-              <span class="hint">命盤無須更動，直接蓋印亦可入世。</span>
-            </div>
+          <div class="altar-cta">
+            <button type="button" class="cta-seal" id="startBtn">
+              <span class="seal-inner">蓋印入世<br><small>落子江湖</small></span>
+            </button>
+            <p class="hint">命盤無須更動，直接點擊上方硃砂大印即可入世。</p>
           </div>
         </div>
 
+        <!-- 卷底三竹簡凡例 -->
+        <div class="notes">
+          <div class="bamboo-card">
+            <h3>同辰降生 · 五人同命不同途</h3>
+            <p>你啼哭落地的同一時辰，九州四方另有四名嬰孩降生。有人生於姑蘇燕子塢錦衣玉食，有人未滿五歲便夭折於陝北旱荒。他們將與你平行走過一生。</p>
+          </div>
+          <div class="bamboo-card">
+            <h3>駐馬回望 · 五度叩問本心</h3>
+            <p>逢七歲垂髫、十六束髮、三十而立、五十知命、七十古稀之年，銅壺滴漏將暫歇片刻，邀你提筆留下一行墨跡，載入最終列傳。</p>
+          </div>
+          <div class="bamboo-card">
+            <h3>民生食貨 · 武林門第考據</h3>
+            <p>揉合《宋史》《元史》人口食貨志（陽壽、夭折率、白銀米糧購買力）與金庸武俠設定。武學雖能逆天改命，卻仍受制於時代兵燹與出身門第。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 分頁二：九州門第譜（改為三大階層牌位卡片，不再使用原版長條圖列表） -->
+      <div class="intro-pane" id="pane-hierarchy" hidden>
         <div class="scroll-box">
           <h2>
-            <span>卷乙 · 九州山河與門第比重</span>
-            <button type="button" class="ghost sm" id="allStatsBtn">展開二十州府全冊</button>
+            <span>《百曉生九州門第命格譜》</span>
+            <button type="button" class="ghost sm" id="allStatsBtn2">查閱二十州府完整數據表</button>
           </h2>
-          <div class="tg-bg">
-            <canvas id="tgMap" width="640" height="360" role="img" aria-label="九州山河與門派分佈水墨輿圖"></canvas>
-            <div class="tg-map-cap">
-              <span>《大宋暨塞外九州山河輿圖》</span>
-              <span>羅盤方位：上北下南 · 左西右東</span>
-            </div>
+          <p class="cm-sub">若你在此刻啼哭落地，以下為三大江湖階層與各州府的命格分佈：</p>
+          <div id="oddsList" class="tier-cards-wrap"></div>
+        </div>
+      </div>
+
+      <!-- 分頁三：忠烈碑林與往生列傳 -->
+      <div class="intro-pane" id="pane-memorial" hidden>
+        <div class="scroll-box">
+          <h2><span>《江湖忠烈祠 · 往生碑林》</span><span class="lbl">過往江湖客之墓誌銘</span></h2>
+          <p class="cm-sub">此處立著過往江湖客的石碑。無論是一代宗師抑或田間老農，皆可為其奉上一炷清香。</p>
+          <div class="memo-grid" id="memoGrid"></div>
+        </div>
+
+        <div class="pastlives" id="pastLives" hidden>
+          <div class="scroll-box" style="margin-top:20px">
+            <h2><span>《藏書閣 · 往生列傳》</span><span class="lbl" id="pastSum"></span></h2>
+            <ul class="pl-list" id="pastBody" style="list-style:none;margin:0;padding:0"></ul>
           </div>
-
-          <div class="odds">
-            <div class="lbl" style="margin-bottom:6px">《百曉生門第命格譜》— 此刻降生之出身比重（91% 黎庶 · 7.5% 江湖底層 · 1.5% 世家）</div>
-            <div id="oddsList"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 江湖忠烈祠 -->
-      <div class="community" id="memoBox">
-        <h2>《江湖忠烈祠 · 往生碑林》</h2>
-        <p class="cm-sub">此處立著過往江湖客的石碑與墓誌銘。無論是一代宗師抑或田間老農，皆可為其奉上一炷清香。</p>
-        <div class="memo-grid" id="memoGrid"></div>
-      </div>
-
-      <!-- 往生傳記錄 -->
-      <div class="pastlives" id="pastLives" hidden>
-        <div class="panel">
-          <h3><span>《藏書閣 · 往生列傳》</span><span class="lbl" id="pastSum"></span></h3>
-          <ul class="pl-list" id="pastBody" style="list-style:none;margin:0;padding:0"></ul>
-        </div>
-      </div>
-
-      <!-- 凡例三則 -->
-      <div class="notes">
-        <div>
-          <h3>凡例一 · 同辰降生之五人</h3>
-          <p>在你啼哭落地的同一個時辰，九州四方另有四名嬰孩降生。有人生於姑蘇燕子塢錦衣玉食，有人未滿五歲便夭折於陝北旱荒。他們將與你平行走過這段歲月，並於最終列傳中同席對照。</p>
-        </div>
-        <div>
-          <h3>凡例二 · 駐馬回望與題字</h3>
-          <p>逢七歲垂髫、十六束髮、三十而立、五十知命、七十古稀之年，銅壺滴漏將暫歇片刻。不妨將這位江湖客的境遇與你自身相比照，提筆留下一行墨跡。</p>
-        </div>
-        <div>
-          <h3>凡例三 · 歷史民生與武林考據</h3>
-          <p>本卷揉合《宋史》《元史》人口食貨志（平均陽壽、嬰兒夭折率、白銀米糧購買力）與金庸十五部武俠作品設定。體魄與武學雖能逆天改命，卻仍受制於時代兵燹與出身門第。</p>
         </div>
       </div>
 
       <p class="fine">
-        <b>卷末題記：</b>本作為結合歷史人口統計與金庸武俠世界觀之獨立創作，靈感啟發自生命統計模擬遊戲 <a href="https://1in8b.life/zh/" target="_blank" rel="noopener noreferrer">1in8b.life</a>，特向查良鏞先生（金庸）筆下之俠義精神致敬。
+        <b>卷末題記：</b>本作為結合宋元明歷史人口統計與金庸武俠世界觀之獨立創作，靈感啟發自生命統計模擬概念（<a href="https://1in8b.life/zh/" target="_blank" rel="noopener noreferrer">1in8b.life</a>），特向查良鏞先生（金庸）筆下之俠義精神致敬。
       </p>
     </div>
   </section>
@@ -174,6 +177,7 @@
   <!-- ==================== 投胎命盤與官府戶帖 (#roll) ==================== -->
   <section id="roll" class="wrap" hidden>
     <div class="roller" id="roller">
+      <div class="seal-stamp" style="margin-bottom:14px;font-size:15px;padding:6px 12px">天命輪轉</div>
       <div class="lbl">正在翻檢《禮部魚鱗清冊》批算生辰八字與降生州府...</div>
       <div class="country" id="rollName" aria-live="polite">河南府 · 黃河農戶</div>
       <div class="meta" id="rollMeta">【中原腹地 · 黎民佃農】</div>
@@ -207,19 +211,123 @@
     </div>
   </section>
 
-  <!-- ==================== 江湖人生主畫面 (#lifeview) ==================== -->
+  <!-- ==================== 江湖人生主畫面：上畫卷舞台 ＋ 下對開書冊 ＋ 底部滴漏案頭 (#lifeview) ==================== -->
   <section id="lifeview" hidden>
-    <header class="topbar">
-      <div class="wrap">
-        <div class="brand">江湖蒼生錄<em>八千萬眾</em></div>
-        <div class="agebox">
-          <div class="age" id="ageNum">0<small>歲</small></div>
-          <div class="yr">
-            <span class="t" id="ageYear"></span>
-            <div class="prog" aria-hidden="true" title="一炷香歲月進度"><i id="prog"></i></div>
+    <div class="wrap life-stage-wrap">
+      <!-- 頂部橫幅舞台：左「人物丹青與四維經脈」＋ 右「水墨山水手卷與修業重心」 -->
+      <div class="hero-stage-top">
+        <!-- 左翼：人物丹青、名諱境界、四維經脈與紋銀 -->
+        <div class="hst-left panel">
+          <div class="hst-identity">
+            <div class="portrait" id="portrait"></div>
+            <div class="hst-meta">
+              <div class="hst-age-row">
+                <span class="age" id="ageNum">0<small>歲</small></span>
+                <span class="yr-tag" id="ageYear"></span>
+              </div>
+              <div class="nm" id="idName"></div>
+              <dl id="idDl" class="compact-dl"></dl>
+            </div>
+          </div>
+
+          <div class="hst-stats-grid">
+            <div id="statBars" class="stat-bars-2col"></div>
+            <div class="money-strip" id="money"></div>
           </div>
         </div>
-        <div class="speed" role="group" aria-label="銅壺滴漏時間流速與工具列">
+
+        <!-- 右翼：綾邊裝裱水墨手卷 ＋ 當歲修業重心 -->
+        <div class="hst-right panel p-scene">
+          <div class="scroll-mount-top">
+            <span id="idTop">《歲月行旅水墨手卷》</span>
+            <span id="status"></span>
+          </div>
+          <div class="scene" id="scene" role="img" aria-label="此刻的江湖人生水墨畫卷"></div>
+          <p class="scenecap" id="sceneCap"></p>
+          <div class="focus-bar">
+            <span class="lbl">【當歲修業重心】</span>
+            <div class="chips" id="focusChips"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 下方對開雙頁書冊：左頁「說書編年話本」 vs 右頁「百曉生分頁玄機匣」 -->
+      <div class="book-folio">
+        <!-- 左頁 (56%)：生平編年話本 -->
+        <div class="panel folio-left p-feed">
+          <h3>
+            <span>《生平編年錄 · 茶肆說書話本》</span>
+            <span class="lbl">點擊任一載可加蓋 ★ 納入走馬燈</span>
+          </h3>
+          <ul class="feed" id="feed" aria-live="polite"></ul>
+        </div>
+
+        <!-- 右頁 (44%)：可切換古籍書籤的《百曉生玄機匣》 -->
+        <div class="panel folio-right">
+          <div class="folio-tabs" role="tablist" aria-label="百曉生玄機匣分頁">
+            <button type="button" class="ftab active" data-foliot="bonds" role="tab" aria-selected="true">紅塵與同辰四人</button>
+            <button type="button" class="ftab" data-foliot="fate" role="tab" aria-selected="false">百歲命盤與陽壽</button>
+            <button type="button" class="ftab" data-foliot="dossier" role="tab" aria-selected="false">州府志與路引</button>
+          </div>
+
+          <!-- 書籤一：家室師門宗譜 ＋ 同辰降生四方命牌 -->
+          <div class="folio-pane" id="fpane-bonds">
+            <div class="sub-sec">
+              <h4><span>《家室與師門宗譜》</span><span class="lbl">紅塵羈絆</span></h4>
+              <div class="fam" id="fam"></div>
+            </div>
+            <div class="sub-sec" style="margin-top:18px">
+              <h4><span>《同辰降生 · 四方命牌》</span><span class="lbl">同一時辰落地之四人</span></h4>
+              <ul class="comps" id="compList"></ul>
+            </div>
+          </div>
+
+          <!-- 書籤二：百歲流年命盤 ＋ 陽壽存歿曲線 -->
+          <div class="folio-pane" id="fpane-fate" hidden>
+            <div class="sub-sec">
+              <h4><span>《百歲流年命盤》</span><span class="lbl">一格一載（金框為當地平均陽壽）</span></h4>
+              <div class="grid10" id="grid"></div>
+              <div class="gridkey">
+                <span><i style="background:var(--grid-lo)"></i>困頓憂患</span>
+                <span><i style="background:var(--grid-mid)"></i>平順安康</span>
+                <span><i style="background:var(--grid-hi)"></i>意氣風發</span>
+                <span><i style="background:var(--loss)"></i>命終</span>
+              </div>
+            </div>
+            <div class="sub-sec" style="margin-top:18px">
+              <h4><span>《同輩陽壽存歿曲線》</span><span class="lbl">同年降生者尚在人間比例</span></h4>
+              <div class="chart" id="chart"></div>
+              <div class="legend">
+                <span><i style="background:var(--stamp)"></i>本州府存世率</span>
+                <span><i style="background:var(--ink3)"></i>中原平均基準</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 書籤三：地方州府志 ＋ 稱骨路引與收支明細 -->
+          <div class="folio-pane" id="fpane-dossier" hidden>
+            <div class="sub-sec">
+              <h4 id="ctyTitle">《地方州府風物志》</h4>
+              <dl id="ctyDl" class="stats-dl"></dl>
+            </div>
+            <div class="sub-sec" style="margin-top:16px">
+              <h4><span>《官府路引與生計開銷》</span></h4>
+              <div class="luyin-tally" id="mrz"></div>
+              <div class="spend" id="spend" style="margin-top:12px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部懸浮《銅壺滴漏 · 案頭操控台》：取代原版頂部工具列 -->
+    <footer class="bottom-command-bar" role="region" aria-label="銅壺滴漏時間操控台">
+      <div class="bcb-inner">
+        <div class="bcb-prog-wrap" title="當歲一炷香流逝進度">
+          <span class="bcb-lbl">歲月香篆</span>
+          <div class="prog"><i id="prog"></i></div>
+        </div>
+        <div class="speed" role="group" aria-label="時間流速">
           <button type="button" id="pauseBtn" aria-pressed="false">❚❚ 駐馬</button>
           <span id="spSet" style="display:inline-flex;gap:3px">
             <button type="button" data-speed="1" aria-pressed="true">一倍</button>
@@ -228,119 +336,17 @@
             <button type="button" data-speed="8" aria-pressed="false">八倍</button>
             <button type="button" data-speed="16" aria-pressed="false">十六倍</button>
           </span>
-          <button type="button" class="ff" id="ffBtn" aria-pressed="false" title="策馬快轉直到遇見下一個江湖十字路口">直奔機緣 »</button>
-          <button type="button" class="ff" id="autoBtn" aria-pressed="false" title="開啟後由天命自動抉擇，可靜觀此人一生">聽憑天命</button>
-          <button type="button" class="ff" id="goShop" title="前往九州坊市購置丹藥、兵刃、秘笈或田產">坊市置產</button>
-          <button type="button" class="ff" data-music="1" aria-pressed="false" title="古琴五聲背景雅樂">♪ 撫琴</button>
-          <button type="button" class="ff" id="pauseQ" aria-pressed="true" title="於7、16、30、50、70歲時駐馬回望">✎ 省思</button>
-          <button type="button" class="ff" id="themeBtn2" title="切換宣紙/夜棧主題">◐</button>
+          <button type="button" class="ff" id="ffBtn" aria-pressed="false" title="策馬快轉直到遇見下一個江湖機緣">直奔機緣 »</button>
+          <button type="button" class="ff" id="autoBtn" aria-pressed="false" title="由天命自動抉擇">聽憑天命</button>
+          <button type="button" class="ff" id="goShop" title="前往九州坊市置辦丹藥兵刃田產">坊市置產</button>
+          <button type="button" class="ff" id="pauseQ" aria-pressed="true" title="駐馬省思提問開關">✎ 省思</button>
           <button type="button" class="ff" id="quitBtn" title="返回書卷首頁">歸隱</button>
         </div>
       </div>
-    </header>
-
-    <div class="wrap life">
-      <!-- 左欄：官府路引腰牌、四維根骨經脈、家眷師門宗譜 -->
-      <div class="col">
-        <div class="panel idcard p-id">
-          <div class="top" id="idTop"></div>
-          <div class="in">
-            <div class="portrait" id="portrait"></div>
-            <div style="min-width:0">
-              <div class="nm" id="idName"></div>
-              <dl id="idDl"></dl>
-            </div>
-          </div>
-          <div class="luyin-tally" id="mrz"></div>
-        </div>
-
-        <div class="panel p-stats">
-          <h3><span>根骨與修為經脈</span><span class="lbl">五節氣條 (0–100)</span></h3>
-          <div id="statBars"></div>
-          <details class="stathelp">
-            <summary>▸ 查閱四維經脈與帳房凡例</summary>
-            <ul>
-              <li><b>體魄</b> 氣血營衛與外傷抵禦力。攸關陽壽、抗疫力與高齡氣衰速度。</li>
-              <li><b>心境</b> 道心與俠義胸懷。過低易生心魔或走火入魔；澄明則能逢凶化吉。</li>
-              <li><b>武學</b> 內外功造詣與識見。決定江湖位階（手無寸鐵→絕頂宗師），受門第與奇遇影響至深。</li>
-              <li><b>情義</b> 與雙親、俠侶、師門及同道之羈絆。危急時決定有無義士拔刀相助。</li>
-            </ul>
-          </details>
-          <div class="money" id="money"></div>
-          <div class="spend" id="spend"></div>
-        </div>
-
-        <div class="panel p-fam">
-          <h3><span>家室與師門宗譜</span><span class="lbl">紅塵羈絆</span></h3>
-          <div class="fam" id="fam"></div>
-        </div>
-      </div>
-
-      <!-- 中欄：綾邊裝裱水墨手卷、當歲修業重心、江湖編年話本 -->
-      <div class="col">
-        <div class="panel p-scene">
-          <div class="scroll-mount-top">
-            <span>《歲月行旅水墨手卷》</span>
-            <span>丹青寫生</span>
-          </div>
-          <div class="scene" id="scene" role="img" aria-label="此刻的江湖人生水墨畫卷"></div>
-          <p class="scenecap" id="sceneCap"></p>
-        </div>
-
-        <div class="panel p-focus">
-          <h3><span>當歲修業重心</span><span class="lbl">隨時可更易</span></h3>
-          <div class="status" id="status"></div>
-          <div class="chips" id="focusChips"></div>
-        </div>
-
-        <div class="panel p-feed">
-          <h3>
-            <span>《生平編年錄 · 說書話本》</span>
-            <span class="lbl">點擊任一條可加蓋 ★ 納入走馬燈</span>
-          </h3>
-          <ul class="feed" id="feed" aria-live="polite"></ul>
-        </div>
-      </div>
-
-      <!-- 右欄：同辰四方命牌、百歲流年命盤、陽壽存歿曲線、地方州府風物志 -->
-      <div class="col col3">
-        <div class="panel p-comps">
-          <h3><span>《同辰降生 · 四方命牌》</span><span class="lbl">同一時辰落地之人</span></h3>
-          <ul class="comps" id="compList"></ul>
-        </div>
-
-        <div class="panel p-grid">
-          <h3><span>《百歲流年命盤》</span><span class="lbl">一格一載（金框為當地平均陽壽）</span></h3>
-          <div class="grid10" id="grid"></div>
-          <div class="gridkey">
-            <span><i style="background:var(--grid-lo)"></i>困頓憂患</span>
-            <span><i style="background:var(--grid-mid)"></i>平順安康</span>
-            <span><i style="background:var(--grid-hi)"></i>意氣風發</span>
-            <span><i style="background:var(--loss)"></i>命終</span>
-          </div>
-        </div>
-
-        <div class="panel p-chart">
-          <h3><span>《同輩陽壽存歿曲線》</span><span class="lbl">同年降生者尚在人間之比例</span></h3>
-          <div class="chart" id="chart"></div>
-          <div class="legend">
-            <span><i style="background:var(--stamp)"></i>本州府存世率</span>
-            <span><i style="background:var(--ink3)"></i>中原平均基準</span>
-          </div>
-        </div>
-
-        <div class="panel stats p-cty">
-          <h3><span id="ctyTitle">地方州府志</span></h3>
-          <dl id="ctyDl"></dl>
-          <div class="src">
-            考據出處：《宋史·地理志》、《元史·食貨志》、歷史人口陽壽模型及金庸武俠門派地理考。
-          </div>
-        </div>
-      </div>
-    </div>
+    </footer>
   </section>
 
-  <!-- ==================== 蓋棺論定 · 石碑拓印武林列傳 (#dead) ==================== -->
+  <!-- ==================== 蓋棺論定 · 中央石碑與左右雙翼列傳 (#dead) ==================== -->
   <section id="dead" class="wrap" hidden></section>
 </main>
 

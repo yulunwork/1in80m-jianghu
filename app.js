@@ -1,11 +1,11 @@
-// 《江湖蒼生錄 · 八千萬眾》主程式邏輯（金庸古典武俠書卷版）
+// 《江湖蒼生錄 · 八千萬眾》主程式邏輯（獨創武俠案頭、全景沙盤與對開古籍版面）
 
 (function () {
   const DATA = window.JIANGHU_DATA;
 
   const cfg = {
     era: 'south_song',
-    mode: 'birth', // 'birth' | 'pop' | 'hero'
+    mode: 'birth',
     pace: 30,
     home: 'tw',
     pauseReflect: true
@@ -38,14 +38,12 @@
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  // 西元年換算天干地支歲次
   function getGanZhi(year) {
     const g = GAN[(year - 4) % 10];
     const z = ZHI[(year - 4) % 12];
     return `${g}${z}年`;
   }
 
-  // 古典年齡雅稱
   function getClassicalAgeTitle(age, sex) {
     if (age <= 1) return '襁褓';
     if (age <= 6) return '孩提';
@@ -124,7 +122,6 @@
     return surname + pick(pool);
   }
 
-  // 產生袁天罡稱骨命格批詞與官府路引關防（取代現代護照 MRZ 碼）
   function buildLuyinTally(p) {
     const boneWeight = p.region.zone === '名門世家'
       ? '五兩八錢 · 根骨奇佳名震九州之命'
@@ -248,33 +245,41 @@
     };
   }
 
-  // ==================== 首頁渲染 ====================
+  // ==================== 首頁三大階層牌位渲染（取代原版長條圖列表） ====================
   function renderIntroOdds() {
     const box = $('oddsList');
     if (!box) return;
-    const list = DATA.REGIONS.slice().sort((a, b) => {
-      const va = cfg.mode === 'pop' ? a.popShare : a.birthShare;
-      const vb = cfg.mode === 'pop' ? b.popShare : b.birthShare;
-      return vb - va;
-    });
+    const mortals = DATA.REGIONS.filter((r) => r.zone !== '江湖底層' && r.zone !== '名門世家');
+    const fringes = DATA.REGIONS.filter((r) => r.zone === '江湖底層');
+    const elites  = DATA.REGIONS.filter((r) => r.zone === '名門世家');
 
-    const top7 = list.slice(0, 7);
-    const maxVal = Math.max(...top7.map((r) => (cfg.mode === 'pop' ? r.popShare : r.birthShare)));
+    const getShare = (r) => (cfg.mode === 'pop' ? r.popShare : r.birthShare);
 
-    box.innerHTML = top7.map((r) => {
-      const val = cfg.mode === 'pop' ? r.popShare : r.birthShare;
-      const pct = Math.min(100, Math.round((val / maxVal) * 100));
-      const isRare = r.zone === '名門世家';
-      return `<div class="orow">
-        <span class="nm-o" title="${r.name}">${r.name}</span>
-        <div class="bar"><i class="${isRare ? 'rare' : ''}" style="width:${pct}%"></i></div>
-        <span class="v">${val.toFixed(1)}%</span>
-      </div>`;
-    }).join('') + `<div class="orow">
-      <span class="nm-o" style="color:var(--accent);font-weight:700">名門世家 / 隱世奇門合計</span>
-      <div class="bar"><i class="rare" style="width:10%"></i></div>
-      <span class="v" style="color:var(--accent)">1.5%</span>
-    </div>`;
+    box.innerHTML = `
+      <div class="tier-col">
+        <h3><span>【凡塵黎庶】</span><span class="seal-stamp">約 90%</span></h3>
+        <p class="t-desc">中原農戶、江南市井與塞外牧民，終生為溫飽與賦稅奔波，偶有奇遇方入武林。</p>
+        <div class="tier-tags">
+          ${mortals.map((r) => `<div class="tier-item"><span>${r.name}</span><span>${getShare(r).toFixed(1)}%</span></div>`).join('')}
+        </div>
+      </div>
+
+      <div class="tier-col t-mid">
+        <h3><span>【江湖外圍】</span><span class="seal-stamp">約 8.5%</span></h3>
+        <p class="t-desc">丐幫小乞、鏢局趟子手、少林武當雜役與綠林嘍囉，自幼習粗淺拳腳，刀口舔血。</p>
+        <div class="tier-tags">
+          ${fringes.map((r) => `<div class="tier-item"><span>${r.name}</span><span>${getShare(r).toFixed(1)}%</span></div>`).join('')}
+        </div>
+      </div>
+
+      <div class="tier-col t-ssr">
+        <h3><span>【名門世家】</span><span class="seal-stamp">僅 1.5%</span></h3>
+        <p class="t-desc">萬中無一的天之驕子。生於武林世家、姑蘇慕容、大理段氏或桃花古墓遺脈。</p>
+        <div class="tier-tags">
+          ${elites.map((r) => `<div class="tier-item"><span>${r.name}</span><span>${getShare(r).toFixed(2)}%</span></div>`).join('')}
+        </div>
+      </div>
+    `;
   }
 
   function renderMemorials() {
@@ -342,7 +347,7 @@
         introBirths += Math.floor(1 + Math.random() * 3);
         const { region } = rollRegion('birth');
         mapPulses.push({ x: region.coords[0], y: region.coords[1], r: 3, alpha: 0.9, type: 'birth' });
-        $('tgFeed').textContent = `【陽冊添丁】一名嬰孩於「${region.name}」呱呱墜地（當地五歲內夭折率 ${region.u5Mort}%）`;
+        $('tgFeed').textContent = `一名嬰孩於「${region.name}」呱呱墜地（當地五歲內夭折率 ${region.u5Mort}%）`;
       }
       if (Math.random() < 0.55) {
         introDeaths += Math.floor(1 + Math.random() * 2);
@@ -360,7 +365,7 @@
           mapPulses[i].alpha -= 0.02;
           if (mapPulses[i].alpha <= 0) mapPulses.splice(i, 1);
         }
-        window.JianghuCanvas.drawJianghuMap($('tgMap'), { pulses: mapPulses });
+        window.JianghuCanvas.drawJianghuMap($('tgMap'), { width: 860, height: 340, pulses: mapPulses });
       }
       requestAnimationFrame(animMap);
     }
@@ -953,24 +958,20 @@
     const realm = getRealm(life.stats.martial);
     const curYear = life.birthYear + life.age;
 
-    // Topbar
     $('ageNum').innerHTML = `${life.age}<small>歲</small>`;
     $('ageYear').textContent = `${life.eraObj.short} · ${curYear}年（${getGanZhi(curYear)}）· ${getClassicalAgeTitle(life.age, life.sex)}`;
 
-    // 江湖腰牌 / 官府路引
-    $('idTop').innerHTML = `<span>《官府路引 · 江湖腰牌》</span><span>字號 ${life.serial}</span>`;
+    $('idTop').innerHTML = `《歲月行旅水墨手卷》 · 路引字號 ${life.serial}`;
     window.JianghuCanvas.drawPortrait($('portrait'), life);
     $('idName').innerHTML = `<span>${life.name}</span><span class="realm-pill">${realm.name}</span>`;
     $('idDl').innerHTML = `
-      <dt>性別生辰</dt><dd>${life.sex === 'F' ? '女' : '男'} · ${getGanZhi(life.birthYear)}${life.shichen}</dd>
-      <dt>籍貫門第</dt><dd>${r.name}</dd>
-      <dt>師承營生</dt><dd>${life.sect}</dd>
-      <dt>成名絕藝</dt><dd>${life.topArt}</dd>
-      <dt>隨身兵刃</dt><dd>${life.weapon}</dd>
+      <dt>生辰</dt><dd>${life.sex === 'F' ? '女' : '男'} · ${getGanZhi(life.birthYear)}${life.shichen}</dd>
+      <dt>籍貫</dt><dd>${r.name}</dd>
+      <dt>門牆</dt><dd>${life.sect}</dd>
+      <dt>絕藝</dt><dd>${life.topArt}（配刃：${life.weapon}）</dd>
     `;
     $('mrz').innerHTML = buildLuyinTally(life);
 
-    // 經脈竹節氣條
     const stDefs = [
       { key: 'health',  label: '體魄', color: 'var(--good)' },
       { key: 'mind',    label: '心境', color: 'var(--gold)' },
@@ -982,21 +983,18 @@
       return `<div class="stat">
         <span>${s.label}</span>
         <div class="bar"><i style="width:${val}%;background:${s.color}"></i></div>
-        <span class="v">${val} / 100</span>
+        <span class="v">${val}</span>
       </div>`;
     }).join('');
 
-    // 帳房銀票與米糧摺子
     const pppNTD = Math.round(life.annualIncome * 18500).toLocaleString();
     $('money').innerHTML = `
       <div>
-        <span class="lbl">歲入紋銀</span>
-        <b>${life.annualIncome.toFixed(1)} 兩 / 年</b>
+        <span>歲入紋銀<b>${life.annualIncome.toFixed(1)} 兩/年</b></span>
         <small>購買力約合今 NT$ ${pppNTD}</small>
       </div>
-      <div>
-        <span class="lbl">行囊積蓄盤纏</span>
-        <b>${life.silver.toFixed(1)} 兩</b>
+      <div style="text-align:right">
+        <span>行囊盤纏<b>${life.silver.toFixed(1)} 兩</b></span>
         <small>折合大宋白米約 ${Math.round(life.silver * 2.2)} 石</small>
       </div>
     `;
@@ -1015,7 +1013,6 @@
       </div>
     `;
 
-    // 家眷與師門宗譜
     const famRows = [
       { role: '嚴父', val: life.family.father.name, alive: life.family.father.alive },
       { role: '慈母', val: life.family.mother.name, alive: life.family.mother.alive }
@@ -1038,13 +1035,11 @@
       </div>
     `).join('');
 
-    // 水墨手卷場景與題跋
     window.JianghuCanvas.drawScene($('scene'), life);
     const foNow = DATA.FOCUSES.find((f) => f.id === life.focus) || DATA.FOCUSES[0];
     $('sceneCap').textContent = `【${r.name}】${life.age}歲之${life.name}（${realm.name}），當歲正以「${foNow.name}」為修業重心。`;
 
-    // 當歲重心木牌
-    $('status').innerHTML = `落腳 <b>${r.name}</b> · 門牆：<b>${life.sect}</b> · 武學造詣：<b>${realm.name}</b>（${realm.desc}）`;
+    $('status').innerHTML = `${r.name} · ${life.sect}`;
     const availFocuses = DATA.FOCUSES.filter((f) => life.age >= f.minAge && life.age <= f.maxAge && (!f.reqMartial || life.stats.martial >= f.reqMartial));
     $('focusChips').innerHTML = availFocuses.map((f) => `
       <button type="button" class="chip" data-foid="${f.id}" aria-pressed="${life.focus === f.id}">
@@ -1059,7 +1054,6 @@
       });
     });
 
-    // 江湖編年話本紀錄
     $('feed').innerHTML = life.logs.slice(0, 60).map((item) => `
       <li class="${item.type} ${item.starred ? 'starred' : ''}" data-logid="${item.id}">
         <span class="a">${item.age}歲</span>
@@ -1079,7 +1073,6 @@
       });
     });
 
-    // 同辰降生四方命牌
     $('compList').innerHTML = life.peers.map((p) => `
       <li class="${p.alive ? '' : 'gone'}">
         <div class="cn">
@@ -1090,7 +1083,6 @@
       </li>
     `).join('');
 
-    // 百歲流年命格方陣
     const leAge = Math.round(life.sex === 'F' ? r.leF : r.leM);
     let cellsHTML = '';
     for (let i = 0; i < 90; i++) {
@@ -1123,8 +1115,7 @@
       <dt>占江湖出生人口比</dt><dd>${r.birthShare}%</dd>
       <dt>預期陽壽（男 / 女）</dt><dd>${r.leM} 歲 / ${r.leF} 歲</dd>
       <dt>五歲內夭折率</dt><dd>${r.u5Mort}%</dd>
-      <dt>人均歲入紋銀</dt><dd>${r.incomeSilver} 兩 (約合今 NT$${Math.round(r.incomeSilver * 18500).toLocaleString()})</dd>
-      <dt>貧富分化指數</dt><dd>${r.gini}</dd>
+      <dt>人均歲入紋銀</dt><dd>${r.incomeSilver} 兩</dd>
       <dt>蒙學識字率</dt><dd>${r.literacy}%</dd>
       <dt>習武入流比例</dt><dd>${r.martialRate}%</dd>
       <dt>兵燹 / 江湖仇殺率</dt><dd>${r.warRisk}% / ${r.feudRisk}%</dd>
@@ -1176,7 +1167,7 @@
     `;
   }
 
-  // ==================== 謝世走馬燈劇場 (.ending) 與 石碑拓印武林列傳 (#dead) ====================
+  // ==================== 謝世走馬燈劇場 (.ending) 與 中軸石碑雙翼列傳 (#dead) ====================
   function triggerEndingSequence() {
     clearInterval(progTimer);
     savePastLifeRecord();
@@ -1254,96 +1245,93 @@
 
     const refEntries = Object.entries(life.reflections);
 
+    // 全新三欄式「中軸石碑 ＋ 左右雙翼列傳」版面配置
     $('dead').innerHTML = `
-      <div class="dcert">
-        <div class="band">
-          <span>《江湖蓋棺列傳 · 碑拓墓誌銘》</span>
-          <span>百曉生武林譜第 ${life.serial} 卷</span>
-        </div>
-        <div class="body">
-          <div>
-            <div class="span">${life.eraObj.name} · 生於 ${life.birthYear}年（${getGanZhi(life.birthYear)}），卒於 ${life.birthYear + life.age}年（享年 ${life.age} 歲）</div>
-            <h1>故 ${life.name} <small style="font-size:.46em;color:var(--accent)">〔${realm.name}〕</small> 之傳</h1>
-            <div class="cause">蓋棺終局：<b>${life.deathCause}</b></div>
-            <p class="story">
-              <b>百曉生曰：</b>${life.name}者，${r.name.split(' · ')[0]}人氏，出自${life.familyTier}。生平歷 ${life.age} 載寒暑，終老時名列「<b>${life.sect}</b>」，武學修為臻至「<b>${realm.name}</b>」（生平所習絕藝：${life.topArt}）。
-              考諸戶部清冊，同歲降生於當地之孩童，僅 <b>${survAtDeath}%</b> 能活至此壽數。一世浮沉，盡歸塵土。
-            </p>
-            <div class="farewell">
-              <label class="lbl" for="fwInput" style="display:block;margin-bottom:6px">題寫石碑墓誌銘（將立碑於首頁「江湖忠烈祠」）</label>
-              <div class="fwrow">
-                <textarea id="fwInput" rows="2" placeholder="題寫墓誌銘，如：仗劍行千里，歸來仍是黃河岸邊的少年..."></textarea>
-                <button type="button" class="cta" id="saveMemoBtn">立碑入祠</button>
-              </div>
-            </div>
-          </div>
-          <div class="summary">
-            <div><span class="lbl">籍貫與門第</span><b>${r.name}</b><small>命格比重 ${life.birthProb.toFixed(2)}% · ${r.stratum}</small></div>
-            <div><span class="lbl">蓋棺武學境界</span><b>${realm.name}（武學 ${Math.round(life.stats.martial)}）</b><small>${realm.desc}</small></div>
-            <div><span class="lbl">隨身絕藝與兵刃</span><b>${life.topArt}</b><small>配刃：${life.weapon}</small></div>
-            <div><span class="lbl">身後遺留盤纏</span><b>紋銀 ${life.silver.toFixed(1)} 兩</b><small>生前歲入約 ${life.annualIncome.toFixed(1)} 兩 / 年</small></div>
-            <div class="wide"><span class="lbl">紅塵家室與師門</span><b>${
-              life.family.spouse ? `伴侶：${life.family.spouse.name}（育有 ${life.family.children.length} 名子嗣）` : '終生未立家室，孤身行路'
-            }</b><small>最終情義：${Math.round(life.stats.bonds)} / 100 · 道心：${Math.round(life.stats.mind)} / 100</small></div>
-          </div>
-        </div>
-        <figure class="lifemap">
-          <canvas id="deadMapCanvas" width="600" height="260"></canvas>
-          <figcaption><b>《生平九州行跡圖》</b>：起於並歸葬於「${r.name}」（硃砂紅圈標示處）</figcaption>
-        </figure>
-      </div>
-
-      <div class="after">
+      <div class="stele-layout">
+        <!-- 左翼：同辰降生五人命途榜 -->
         <div class="panel">
-          <h3><span>同辰（${life.shichen}）降生五人蓋棺對照</span><span class="lbl">同命不同途</span></h3>
+          <h3><span>《同辰五人蓋棺榜》</span><span class="lbl">${life.shichen}同生</span></h3>
           <ul class="lives5">
             ${all5.map((p) => `
               <li class="${p.isMe ? 'me' : ''}">
-                <div class="ca">${p.age}<small style="font-size:13px">歲</small></div>
+                <div class="ca">${p.age}<small style="font-size:12px">歲</small></div>
                 <div>
-                  <b>${p.name}（${p.sex === 'F' ? '女' : '男'}${p.isMe ? ' · 本傳' : ''}）— ${p.regionName}</b>
-                  <p>門第身分：${p.sect}<br>最終歸宿：${p.cause}</p>
+                  <b>${p.name}（${p.sex === 'F' ? '女' : '男'}${p.isMe ? ' · 本傳' : ''}）</b>
+                  <p>${p.regionName} · ${p.sect}<br>終局：${p.cause}</p>
                 </div>
               </li>
             `).join('')}
           </ul>
-        </div>
-
-        <div class="panel homecmp">
-          <h3><span>古今人間考據對照</span><span class="lbl">此世江湖 vs ${homeObj.name}</span></h3>
-          <table>
-            <thead>
-              <tr><th>民生與命途指標</th><th>此世（${r.name}）</th><th>${homeObj.name}</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>平均預期陽壽</td><td>${life.sex === 'F' ? r.leF : r.leM} 歲（享年 ${life.age} 歲）</td><td>${homeObj.le} 歲</td></tr>
-              <tr><td>五歲內夭折率</td><td>${r.u5Mort}%</td><td>${homeObj.u5}%</td></tr>
-              <tr><td>識字與蒙學普及率</td><td>${r.literacy}%</td><td>${homeObj.literacy}%</td></tr>
-              <tr><td>年均購買力所得</td><td>紋銀 ${life.annualIncome.toFixed(1)} 兩 (約 NT$${Math.round(life.annualIncome * 18500).toLocaleString()})</td><td>PPP US$${homeObj.incomeUSD.toLocaleString()}</td></tr>
-              <tr><td>兵燹/江湖橫死風險</td><td>年化 ${(r.warRisk * 0.4).toFixed(1)}%</td><td>每十萬人 ${homeObj.homicide} 人</td></tr>
-            </tbody>
-          </table>
           ${refEntries.length ? `
-            <div style="margin-top:18px;border-top:1px dashed var(--rule);padding-top:12px">
+            <div style="margin-top:16px;border-top:1px dashed var(--rule);padding-top:12px">
               <span class="lbl">生平駐馬省思手札</span>
-              <ul class="journal">
-                ${refEntries.map(([k, v]) => `<li><small>${k} 歲時題字</small><q>${v}</q></li>`).join('')}
+              <ul style="list-style:none;margin:6px 0 0;padding:0;font-size:13px">
+                ${refEntries.map(([k, v]) => `<li style="padding:4px 0;border-bottom:1px dotted var(--rule-inner)"><b style="color:var(--gold)">${k}歲：</b>「${v}」</li>`).join('')}
               </ul>
             </div>
           ` : ''}
         </div>
-      </div>
 
-      <div class="endbtns">
-        <button type="button" class="cta" id="rebirthBtn">再入江湖輪迴（重新落子）</button>
-        <button type="button" class="ghost" id="shareDeadCardBtn">下載古籍列傳圖卡</button>
-        <button type="button" class="ghost" id="backIntroBtn">返回書卷首頁與忠烈祠</button>
+        <!-- 中央矗立：石碑拓印本傳 -->
+        <div class="stele-center">
+          <div class="stele-head">百曉生武林譜 · 第 ${life.serial} 卷</div>
+          <div style="font-size:13px;color:#B5A792">${life.eraObj.name}（${life.birthYear}–${life.birthYear + life.age}）</div>
+          <h1 class="stele-title">故 ${life.name} 之碑</h1>
+          <div><span class="seal-stamp" style="color:#E0665A;border-color:#E0665A">${realm.name} · 享年 ${life.age} 歲</span></div>
+          <div class="stele-cause">終局：${life.deathCause}</div>
+
+          <div class="stele-bio">
+            <b>太史公／百曉生曰：</b>${life.name}者，${r.name.split(' · ')[0]}人氏，生於${life.familyTier}。生平歷 ${life.age} 載寒暑，終老時名列「<b>${life.sect}</b>」，武學修為臻至「<b>${realm.name}</b>」（所習絕藝：${life.topArt}）。
+            考諸戶部清冊，同歲降生於當地之孩童，僅 <b>${survAtDeath}%</b> 能活至此壽數。一世浮沉，盡歸塵土。
+          </div>
+
+          <div class="stele-metrics">
+            <div><small>籍貫門第 (比重 ${life.birthProb.toFixed(2)}%)</small><b>${r.name}</b></div>
+            <div><small>隨身絕藝與配刃</small><b>${life.topArt} · ${life.weapon}</b></div>
+            <div><small>身後遺留盤纏</small><b>紋銀 ${life.silver.toFixed(1)} 兩</b></div>
+            <div><small>紅塵家室</small><b>${life.family.spouse ? `${life.family.spouse.name} (${life.family.children.length}子嗣)` : '孤身未娶/未嫁'}</b></div>
+          </div>
+
+          <div style="text-align:left;margin-top:14px">
+            <label for="fwInput" style="font-size:12px;color:#D4A359;display:block;margin-bottom:4px">銘刻石碑墓誌銘（將立碑於首頁「忠烈碑林」）：</label>
+            <textarea id="fwInput" rows="2" style="width:100%;background:#12100E;color:#EAE0CC;border:1px solid #5C4932;padding:8px;font:inherit;font-size:13.5px" placeholder="如：仗劍行千里，歸來仍是黃河岸邊的少年..."></textarea>
+            <button type="button" class="cta sm" id="saveMemoBtn" style="width:100%;margin-top:6px">銘刻立碑入祠</button>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:18px;padding-top:16px;border-top:1px dashed rgba(212,163,89,0.3)">
+            <button type="button" class="cta" id="rebirthBtn">【再入江湖輪迴（重新落子）】</button>
+            <div style="display:flex;gap:8px">
+              <button type="button" class="ghost sm" id="shareDeadCardBtn" style="flex:1;background:#2A231B;color:#EAE0CC">下載古籍列傳圖卡</button>
+              <button type="button" class="ghost sm" id="backIntroBtn" style="flex:1;background:#2A231B;color:#EAE0CC">返回案頭首頁</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右翼：九州行跡圖 ＋ 古今人間考據對照 -->
+        <div class="panel homecmp">
+          <h3><span>《生平九州行跡圖》</span><span class="lbl">起落之地</span></h3>
+          <canvas id="deadMapCanvas" width="460" height="220" style="width:100%;height:auto;border:1px solid var(--rule);margin-bottom:16px"></canvas>
+
+          <h3><span>《古今人間考據對照》</span><span class="lbl">此世 vs 今生</span></h3>
+          <table>
+            <thead>
+              <tr><th>指標</th><th>此世（${r.name.split(' · ')[0]}）</th><th>${homeObj.name}</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>預期陽壽</td><td>${life.sex === 'F' ? r.leF : r.leM} 歲（享年 ${life.age}）</td><td>${homeObj.le} 歲</td></tr>
+              <tr><td>五歲夭折率</td><td>${r.u5Mort}%</td><td>${homeObj.u5}%</td></tr>
+              <tr><td>蒙學識字率</td><td>${r.literacy}%</td><td>${homeObj.literacy}%</td></tr>
+              <tr><td>年均購買力</td><td>紋銀 ${life.annualIncome.toFixed(1)} 兩</td><td>US$${homeObj.incomeUSD.toLocaleString()}</td></tr>
+              <tr><td>兵燹橫死率</td><td>年化 ${(r.warRisk * 0.4).toFixed(1)}%</td><td>${homeObj.homicide}/十萬</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     `;
 
     window.JianghuCanvas.drawJianghuMap($('deadMapCanvas'), {
-      width: 600,
-      height: 260,
+      width: 460,
+      height: 220,
       highlightId: r.id,
       trail: life.trail
     });
@@ -1366,7 +1354,7 @@
       localStorage.setItem('jh_memorials', JSON.stringify(saved.slice(0, 20)));
       $('saveMemoBtn').disabled = true;
       $('saveMemoBtn').textContent = '已立碑入祠';
-      showToast('已將墓誌銘立碑於首頁「江湖忠烈祠」！');
+      showToast('已將墓誌銘立碑於首頁「忠烈碑林」！');
     });
 
     $('rebirthBtn').addEventListener('click', startBirthRoll);
@@ -1400,7 +1388,6 @@
     localStorage.setItem('jh_past_lives', JSON.stringify(past.slice(0, 30)));
   }
 
-  // 匯出古籍宣紙朱印圖卡 (Canvas PNG)
   function exportShareCard(isDead = false) {
     if (!life) return;
     const cv = document.createElement('canvas');
@@ -1408,7 +1395,6 @@
     cv.height = 430;
     const ctx = cv.getContext('2d');
 
-    // 宣紙底與烏絲欄雙線外框
     ctx.fillStyle = '#F6F0E0';
     ctx.fillRect(0, 0, 740, 430);
     ctx.strokeStyle = '#8C6224';
@@ -1417,7 +1403,6 @@
     ctx.lineWidth = 1;
     ctx.strokeRect(17, 17, 706, 396);
 
-    // 頂部木牌額
     ctx.fillStyle = isDead ? '#221E1B' : '#4A3728';
     ctx.fillRect(18, 18, 704, 52);
 
@@ -1427,7 +1412,6 @@
     ctx.font = '13px "Noto Serif TC", serif';
     ctx.fillText(`百曉生卷宗字號 第 ${life.serial} 號`, 520, 50);
 
-    // 主標題與姓名
     ctx.fillStyle = '#1C1814';
     ctx.font = 'bold 36px "Noto Serif TC", serif';
     const title = isDead
@@ -1450,7 +1434,6 @@
       ctx.fillText(`當地習武入流率：${life.region.martialRate}% · 流傳武學：${life.region.artsPool.join('、')}`, 34, 236);
     }
 
-    // 右下角繪製硃砂方印
     ctx.strokeStyle = '#9E2424';
     ctx.lineWidth = 2.5;
     ctx.strokeRect(618, 315, 76, 76);
@@ -1531,6 +1514,38 @@
       homeSel.addEventListener('change', () => { cfg.home = homeSel.value; });
     }
 
+    // 首頁三書籤分頁切換
+    document.querySelectorAll('[data-introt]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.introt;
+        document.querySelectorAll('[data-introt]').forEach((b) => {
+          const on = b === btn;
+          b.classList.toggle('active', on);
+          b.setAttribute('aria-selected', String(on));
+        });
+        ['altar', 'hierarchy', 'memorial'].forEach((k) => {
+          const pane = $(`pane-${k}`);
+          if (pane) pane.hidden = k !== target;
+        });
+      });
+    });
+
+    // 主畫面右側《百曉生玄機匣》三書籤分頁切換
+    document.querySelectorAll('[data-foliot]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.foliot;
+        document.querySelectorAll('[data-foliot]').forEach((b) => {
+          const on = b === btn;
+          b.classList.toggle('active', on);
+          b.setAttribute('aria-selected', String(on));
+        });
+        ['bonds', 'fate', 'dossier'].forEach((k) => {
+          const pane = $(`fpane-${k}`);
+          if (pane) pane.hidden = k !== target;
+        });
+      });
+    });
+
     document.querySelectorAll('[data-era]').forEach((btn) => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('[data-era]').forEach((b) => b.setAttribute('aria-pressed', 'false'));
@@ -1566,7 +1581,6 @@
       showToast(`書卷明暗已切換為：${next === 'dark' ? '夜雨客棧（深色）' : '宋刻宣紙（淺色）'}`);
     };
     if ($('themeBtn')) $('themeBtn').addEventListener('click', toggleTheme);
-    if ($('themeBtn2')) $('themeBtn2').addEventListener('click', toggleTheme);
 
     document.querySelectorAll('[data-music]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -1577,6 +1591,7 @@
     });
 
     if ($('allStatsBtn')) $('allStatsBtn').addEventListener('click', openAllRegionsModal);
+    if ($('allStatsBtn2')) $('allStatsBtn2').addEventListener('click', openAllRegionsModal);
     if ($('startBtn')) $('startBtn').addEventListener('click', startBirthRoll);
     if ($('beginBtn')) $('beginBtn').addEventListener('click', beginLifeSimulation);
     if ($('certCardBtn')) $('certCardBtn').addEventListener('click', () => exportShareCard(false));
