@@ -1,7 +1,7 @@
-// 《八千萬分之1 · 江湖蒼生錄》視覺繪圖與古琴音訊引擎
+// 《江湖蒼生錄 · 八千萬眾》水墨設色畫卷、古地圖與古琴音訊引擎
 
 window.JianghuCanvas = (function () {
-  // 繪製九州江湖輿圖 (首頁即時動態地圖 / 出生戶帖地圖 / 命終足跡地圖)
+  // 繪製古羊皮水墨《九州山河武林輿圖》
   function drawJianghuMap(canvas, opts = {}) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -11,43 +11,84 @@ window.JianghuCanvas = (function () {
       (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = isDark ? '#121A1E' : '#E5ECE8';
+    // 宣紙/古羊皮底色
+    ctx.fillStyle = isDark ? '#171411' : '#EAE0CC';
     ctx.fillRect(0, 0, w, h);
 
-    // 繪製疆域大陸輪廓 (簡化水墨九州塊面)
-    ctx.fillStyle = isDark ? '#212E34' : '#CBD6D1';
+    // 繪製九州疆域水墨塊面
+    ctx.fillStyle = isDark ? '#241F1A' : '#DCD0B8';
+    ctx.strokeStyle = isDark ? '#4A3E31' : '#A69374';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(w * 0.12, h * 0.20);
+    ctx.moveTo(w * 0.10, h * 0.18);
     ctx.lineTo(w * 0.45, h * 0.08);
-    ctx.lineTo(w * 0.84, h * 0.14);
-    ctx.lineTo(w * 0.88, h * 0.34);
-    ctx.lineTo(w * 0.78, h * 0.56);
-    ctx.lineTo(w * 0.74, h * 0.78);
-    ctx.lineTo(w * 0.52, h * 0.88);
-    ctx.lineTo(w * 0.28, h * 0.82);
-    ctx.lineTo(w * 0.14, h * 0.58);
+    ctx.lineTo(w * 0.85, h * 0.13);
+    ctx.lineTo(w * 0.89, h * 0.35);
+    ctx.lineTo(w * 0.78, h * 0.57);
+    ctx.lineTo(w * 0.74, h * 0.80);
+    ctx.lineTo(w * 0.51, h * 0.90);
+    ctx.lineTo(w * 0.27, h * 0.83);
+    ctx.lineTo(w * 0.12, h * 0.58);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
+
+    // 繪製古地圖山形筆觸 (崑崙、終南華山、嵩山、峨眉、長白)
+    const mountains = [
+      [0.22, 0.36], [0.47, 0.42], [0.55, 0.45], [0.40, 0.60], [0.76, 0.20], [0.35, 0.70]
+    ];
+    ctx.strokeStyle = isDark ? '#5C4D3C' : '#8C7A5B';
+    ctx.lineWidth = 1.4;
+    mountains.forEach(([mx, my]) => {
+      const cx = mx * w;
+      const cy = my * h;
+      ctx.beginPath();
+      ctx.moveTo(cx - 14, cy + 4);
+      ctx.lineTo(cx - 6, cy - 6);
+      ctx.lineTo(cx, cy + 1);
+      ctx.lineTo(cx + 6, cy - 8);
+      ctx.lineTo(cx + 15, cy + 4);
+      ctx.stroke();
+    });
 
     // 繪製黃河與長江水系
-    ctx.strokeStyle = isDark ? '#324B54' : '#9BB2AC';
+    ctx.strokeStyle = isDark ? '#3D5A58' : '#7A968E';
     ctx.lineWidth = 2.2;
     // 黃河
     ctx.beginPath();
-    ctx.moveTo(w * 0.26, h * 0.44);
-    ctx.quadraticCurveTo(w * 0.44, h * 0.28, w * 0.50, h * 0.42);
-    ctx.quadraticCurveTo(w * 0.58, h * 0.47, w * 0.72, h * 0.37);
+    ctx.moveTo(w * 0.25, h * 0.44);
+    ctx.quadraticCurveTo(w * 0.44, h * 0.27, w * 0.50, h * 0.42);
+    ctx.quadraticCurveTo(w * 0.58, h * 0.47, w * 0.73, h * 0.37);
     ctx.stroke();
     // 長江
     ctx.beginPath();
-    ctx.moveTo(w * 0.28, h * 0.62);
+    ctx.moveTo(w * 0.27, h * 0.62);
     ctx.quadraticCurveTo(w * 0.48, h * 0.64, w * 0.56, h * 0.56);
-    ctx.quadraticCurveTo(w * 0.66, h * 0.58, w * 0.77, h * 0.55);
+    ctx.quadraticCurveTo(w * 0.66, h * 0.58, w * 0.78, h * 0.55);
     ctx.stroke();
+
+    // 右上角繪製古典方位羅盤 (子午卯酉)
+    const compX = w - 42;
+    const compY = 42;
+    ctx.strokeStyle = isDark ? '#705E48' : '#8C7658';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(compX, compY, 18, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(compX, compY - 22);
+    ctx.lineTo(compX, compY + 22);
+    ctx.moveTo(compX - 22, compY);
+    ctx.lineTo(compX + 22, compY);
+    ctx.stroke();
+    ctx.fillStyle = isDark ? '#B5A792' : '#5C4D3C';
+    ctx.font = '10px "Noto Serif TC", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('北', compX, compY - 24);
+    ctx.textAlign = 'start';
 
     // 繪製各疆域節點
     const regions = window.JIANGHU_DATA.REGIONS;
-    ctx.font = '11px "Noto Sans TC", sans-serif';
     regions.forEach((r) => {
       const rx = r.coords[0] * w;
       const ry = r.coords[1] * h;
@@ -56,26 +97,26 @@ window.JianghuCanvas = (function () {
       ctx.beginPath();
       ctx.arc(rx, ry, isHighlight ? 6 : 3.2, 0, Math.PI * 2);
       ctx.fillStyle = isHighlight
-        ? '#8C1D3C'
-        : (r.zone === '名門世家' ? '#9C7020' : '#0F6E68');
+        ? '#9E2424'
+        : (r.zone === '名門世家' ? '#8C6224' : '#245C4E');
       ctx.fill();
 
       if (isHighlight) {
-        ctx.strokeStyle = '#8C1D3C';
+        ctx.strokeStyle = '#9E2424';
         ctx.lineWidth = 1.8;
         ctx.beginPath();
         ctx.arc(rx, ry, 12, 0, Math.PI * 2);
         ctx.stroke();
 
-        ctx.fillStyle = isDark ? '#F0F4F2' : '#142026';
-        ctx.font = 'bold 12px "Noto Serif TC", serif';
-        ctx.fillText(r.name.split(' · ')[0], rx + 9, ry + 4);
+        ctx.fillStyle = isDark ? '#F0E6D2' : '#1C1814';
+        ctx.font = 'bold 12.5px "Noto Serif TC", serif';
+        ctx.fillText(r.name.split(' · ')[0], rx + 10, ry + 4);
       }
     });
 
-    // 若有足跡路線 (命終卷宗)
+    // 若有足跡路線
     if (opts.trail && opts.trail.length > 1) {
-      ctx.strokeStyle = '#8C1D3C';
+      ctx.strokeStyle = '#9E2424';
       ctx.lineWidth = 2;
       ctx.setLineDash([4, 3]);
       ctx.beginPath();
@@ -97,143 +138,140 @@ window.JianghuCanvas = (function () {
         ctx.beginPath();
         ctx.arc(px, py, p.r, 0, Math.PI * 2);
         ctx.strokeStyle = p.type === 'birth'
-          ? `rgba(15, 110, 104, ${p.alpha})`
-          : `rgba(140, 29, 60, ${p.alpha})`;
+          ? `rgba(36, 92, 78, ${p.alpha})`
+          : `rgba(158, 36, 36, ${p.alpha})`;
         ctx.lineWidth = 2;
         ctx.stroke();
 
         ctx.beginPath();
         ctx.arc(px, py, 3, 0, Math.PI * 2);
-        ctx.fillStyle = p.type === 'birth' ? '#0F6E68' : '#8C1D3C';
+        ctx.fillStyle = p.type === 'birth' ? '#245C4E' : '#9E2424';
         ctx.fill();
       });
     }
+
+    // 古地圖雙線內框
+    ctx.strokeStyle = isDark ? '#4A3E31' : '#9C8869';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(5, 5, w - 10, h - 10);
   }
 
-  // 繪製 68x86 江湖身契像素肖像 (隨年齡、性別、武學境界、兵刃動態變化)
+  // 繪製水墨丹青人物小像 (隨年齡、性別、武學境界、兵刃動態變化)
   function drawPortrait(container, state) {
     if (!container) return;
     let cv = container.querySelector('canvas');
     if (!cv) {
       container.innerHTML = '';
       cv = document.createElement('canvas');
-      cv.width = 34;
-      cv.height = 43;
+      cv.width = 36;
+      cv.height = 46;
       container.appendChild(cv);
     }
     const ctx = cv.getContext('2d');
     ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, 34, 43);
+    ctx.clearRect(0, 0, 36, 46);
 
     const age = state.age || 0;
     const isF = state.sex === 'F';
     const martial = state.stats ? state.stats.martial : 10;
 
-    // 背景底色
-    ctx.fillStyle = martial >= 70 ? '#DFECE8' : '#EAECE7';
-    ctx.fillRect(0, 0, 34, 43);
+    // 宣紙底色與右上角小朱印
+    ctx.fillStyle = '#EFE6D2';
+    ctx.fillRect(0, 0, 36, 46);
+    ctx.fillStyle = '#9E2424';
+    ctx.fillRect(30, 3, 3, 5);
 
-    // 若為絕頂高手，背後繪製淡淡太極/劍氣光暈
-    if (martial >= 52) {
-      ctx.fillStyle = martial >= 85 ? '#EED9B3' : '#CFE4DF';
-      ctx.fillRect(7, 6, 20, 20);
+    // 若為高手，背後繪製淡淡水墨圓相
+    if (martial >= 50) {
+      ctx.fillStyle = martial >= 85 ? '#E2CFA6' : '#CFDAD4';
+      ctx.fillRect(8, 7, 20, 20);
     }
 
     // 嬰幼兒 (0-3歲)
     if (age <= 3) {
-      // 襁褓
-      ctx.fillStyle = isF ? '#C95B6E' : '#3C7A74';
-      ctx.fillRect(10, 22, 14, 16);
-      ctx.fillStyle = '#F2D2B6';
-      ctx.fillRect(12, 14, 10, 9);
-      // 眼睛與胎毛
+      ctx.fillStyle = isF ? '#B84A4A' : '#2E6B5E';
+      ctx.fillRect(11, 24, 14, 16);
+      ctx.fillStyle = '#EAC5A4';
+      ctx.fillRect(13, 15, 10, 9);
       ctx.fillStyle = '#222';
-      ctx.fillRect(16, 12, 2, 2);
-      ctx.fillRect(14, 18, 2, 1);
-      ctx.fillRect(18, 18, 2, 1);
+      ctx.fillRect(17, 13, 2, 2);
+      ctx.fillRect(15, 19, 2, 1);
+      ctx.fillRect(19, 19, 2, 1);
       return;
     }
 
-    // 決定髮色與膚色
-    const hairColor = age >= 60 ? '#D8D8D8' : (age >= 45 ? '#666B6E' : '#1F2426');
+    const hairColor = age >= 60 ? '#D8D8D8' : (age >= 45 ? '#66635E' : '#1E1B18');
     const skinColor = '#EAC5A4';
 
-    // 衣袍顏色
-    let robeColor = '#5E6B66'; // 平民布衣
-    if (martial >= 72) robeColor = '#1E4E4A'; // 宗師青衫
-    else if (martial >= 35) robeColor = '#8C1D3C'; // 勁裝
-    else if (state.region && state.region.zone === '名門世家') robeColor = '#8A6828';
-    else if (isF) robeColor = '#9B4F62';
+    // 古典衣袍配色
+    let robeColor = '#5C5346'; // 褐衣平民
+    if (martial >= 72) robeColor = '#245C4E'; // 宗師松青道袍
+    else if (martial >= 32) robeColor = '#7A2323'; // 武者玄紅勁裝
+    else if (state.region && state.region.zone === '名門世家') robeColor = '#8C6224';
+    else if (isF) robeColor = '#8E444D';
 
-    // 身體與衣襟
+    // 身軀與交領右衽
     ctx.fillStyle = robeColor;
-    ctx.fillRect(7, 26, 20, 17);
-    // 交領白色內襯
-    ctx.fillStyle = '#F4F4F0';
-    ctx.fillRect(14, 26, 6, 6);
+    ctx.fillRect(8, 27, 20, 19);
+    ctx.fillStyle = '#F5EFE0';
+    ctx.fillRect(15, 27, 6, 7);
     ctx.fillStyle = robeColor;
-    ctx.fillRect(16, 28, 2, 4);
+    ctx.fillRect(17, 29, 2, 5);
 
-    // 背後兵刃 (若武學 >= 25 或配有兵刃)
-    if (martial >= 25 || state.weapon !== '無') {
-      ctx.fillStyle = '#8C6239';
-      ctx.fillRect(25, 8, 2, 18);
-      ctx.fillStyle = '#D9AF59';
-      ctx.fillRect(24, 11, 4, 2);
+    // 背後佩劍/兵刃
+    if (martial >= 22 || state.weapon !== '無') {
+      ctx.fillStyle = '#5C3A21';
+      ctx.fillRect(26, 8, 2, 19);
+      ctx.fillStyle = '#C49A45';
+      ctx.fillRect(25, 11, 4, 2);
     }
 
-    // 臉龐
+    // 臉部與頸部
     ctx.fillStyle = skinColor;
-    ctx.fillRect(11, 12, 12, 13);
-    // 脖子
-    ctx.fillRect(14, 24, 6, 3);
+    ctx.fillRect(12, 13, 12, 13);
+    ctx.fillRect(15, 25, 6, 3);
 
-    // 髮型與頭冠
+    // 髮髻與冠巾
     ctx.fillStyle = hairColor;
     if (age < 13) {
-      // 垂髫雙髻
-      ctx.fillRect(10, 10, 14, 4);
-      ctx.fillRect(8, 11, 3, 4);
-      ctx.fillRect(23, 11, 3, 4);
+      ctx.fillRect(11, 11, 14, 4);
+      ctx.fillRect(9, 12, 3, 4);
+      ctx.fillRect(24, 12, 3, 4);
     } else if (isF) {
-      // 女子雲鬢與髮簪
-      ctx.fillRect(10, 9, 14, 5);
-      ctx.fillRect(9, 12, 2, 10);
-      ctx.fillRect(23, 12, 2, 10);
-      ctx.fillRect(13, 6, 8, 3);
-      ctx.fillStyle = '#D9AF59';
-      ctx.fillRect(11, 7, 12, 1);
+      ctx.fillRect(11, 10, 14, 5);
+      ctx.fillRect(10, 13, 2, 11);
+      ctx.fillRect(24, 13, 2, 11);
+      ctx.fillRect(14, 7, 8, 3);
+      ctx.fillStyle = '#C49A45';
+      ctx.fillRect(12, 8, 12, 1);
     } else {
-      // 男子束髮道冠/英雄巾
-      ctx.fillRect(10, 10, 14, 4);
-      ctx.fillRect(14, 6, 6, 4);
-      ctx.fillStyle = martial >= 32 ? '#8C1D3C' : '#3A4A4E';
-      ctx.fillRect(13, 8, 8, 2);
+      ctx.fillRect(11, 11, 14, 4);
+      ctx.fillRect(15, 7, 6, 4);
+      ctx.fillStyle = martial >= 32 ? '#9E2424' : '#3D352E';
+      ctx.fillRect(14, 9, 8, 2);
     }
 
-    // 五官
-    ctx.fillStyle = '#1B2224';
-    ctx.fillRect(13, 16, 2, 2);
-    ctx.fillRect(19, 16, 2, 2);
-    // 眉毛
+    // 眉目與鬍鬚
+    ctx.fillStyle = '#1C1814';
+    ctx.fillRect(14, 17, 2, 2);
+    ctx.fillRect(20, 17, 2, 2);
     ctx.fillStyle = hairColor;
-    ctx.fillRect(13, 14, 3, 1);
-    ctx.fillRect(18, 14, 3, 1);
+    ctx.fillRect(14, 15, 3, 1);
+    ctx.fillRect(19, 15, 3, 1);
 
-    // 嘴與鬍鬚
-    if (!isF && age >= 32) {
+    if (!isF && age >= 30) {
       ctx.fillStyle = hairColor;
-      ctx.fillRect(14, 21, 6, 1);
-      if (age >= 50) {
-        ctx.fillRect(15, 22, 4, 5);
+      ctx.fillRect(15, 22, 6, 1);
+      if (age >= 48) {
+        ctx.fillRect(16, 23, 4, 5);
       }
     } else {
-      ctx.fillStyle = isF ? '#B5485A' : '#9E6B55';
-      ctx.fillRect(15, 21, 4, 1);
+      ctx.fillStyle = isF ? '#A8383B' : '#8E5B45';
+      ctx.fillRect(16, 22, 4, 1);
     }
   }
 
-  // 繪製 32:10 橫幅江湖場景 (依地域、年齡、重心繪製水墨像素風畫卷)
+  // 繪製 32:10 水墨設色山水畫卷
   function drawScene(container, state) {
     if (!container) return;
     let cv = container.querySelector('canvas');
@@ -252,13 +290,13 @@ window.JianghuCanvas = (function () {
     const sceneType = state.region ? state.region.sceneType : 'plains';
     const isNight = (state.age || 0) % 5 === 4;
 
-    // 1. 天空漸層
+    // 1. 宣紙設色天空
     const palettes = {
-      plains:   isNight ? ['#1A232C', '#2B3945'] : ['#D8E4DD', '#EFECE0'],
-      jiangnan: isNight ? ['#162629', '#263E42'] : ['#CFE3DF', '#E8F1EE'],
-      mountain: isNight ? ['#181F28', '#293542'] : ['#CBD9E0', '#E4ECEF'],
-      fortress: isNight ? ['#241B1E', '#3A2A2D'] : ['#DFD3CC', '#EDE5DF'],
-      desert:   isNight ? ['#221D18', '#3B3126'] : ['#E6D5B8', '#F2E8D5']
+      plains:   isNight ? ['#1A1D24', '#2A2F38'] : ['#E6DEC8', '#F4EFE0'],
+      jiangnan: isNight ? ['#162224', '#243638'] : ['#D8E2DC', '#F0F4F0'],
+      mountain: isNight ? ['#181C24', '#272F3B'] : ['#D5DCE0', '#EDEFF0'],
+      fortress: isNight ? ['#221818', '#382626'] : ['#E2D4C8', '#F0E8DF'],
+      desert:   isNight ? ['#211B14', '#382E22'] : ['#E5D2B0', '#F4E8D0']
     };
     const pal = palettes[sceneType] || palettes.plains;
     const grad = ctx.createLinearGradient(0, 0, 0, h);
@@ -267,18 +305,18 @@ window.JianghuCanvas = (function () {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
 
-    // 太陽或明月
-    ctx.fillStyle = isNight ? '#F4EBC3' : '#C84B31';
+    // 落日硃砂或孤月
+    ctx.fillStyle = isNight ? '#F2E5C4' : '#B8332A';
     ctx.beginPath();
-    ctx.arc(265, 24, isNight ? 9 : 11, 0, Math.PI * 2);
+    ctx.arc(262, 24, isNight ? 9 : 11, 0, Math.PI * 2);
     ctx.fill();
 
-    // 2. 遠山層次
-    ctx.fillStyle = isNight ? '#253138' : '#9FB3AD';
+    // 2. 水墨遠山與雲氣
+    ctx.fillStyle = isNight ? '#252B30' : '#9AA6A0';
     ctx.beginPath();
     ctx.moveTo(0, 72);
     for (let x = 0; x <= w; x += 40) {
-      const peak = sceneType === 'mountain' ? 28 + (x % 3) * 10 : 52 + (x % 2) * 8;
+      const peak = sceneType === 'mountain' ? 24 + (x % 3) * 10 : 50 + (x % 2) * 8;
       ctx.lineTo(x + 20, peak);
       ctx.lineTo(x + 40, 72);
     }
@@ -286,88 +324,85 @@ window.JianghuCanvas = (function () {
     ctx.lineTo(0, h);
     ctx.fill();
 
-    // 3. 地面與建築細節
+    // 山間雲霧留白帶
+    ctx.fillStyle = isNight ? 'rgba(255,255,255,0.05)' : 'rgba(248,243,230,0.55)';
+    ctx.fillRect(0, 56, w, 6);
+
+    // 3. 地域風物前景
     if (sceneType === 'jiangnan') {
-      // 江南水鄉：河道、石拱橋、白牆黛瓦
-      ctx.fillStyle = isNight ? '#1D3338' : '#7FA8A3';
+      ctx.fillStyle = isNight ? '#1B2E32' : '#769892';
       ctx.fillRect(0, 72, w, 28);
-      // 白牆屋舍
-      ctx.fillStyle = isNight ? '#8B9694' : '#F4F6F4';
-      ctx.fillRect(36, 48, 38, 24);
-      ctx.fillStyle = '#2B3537';
-      ctx.fillRect(32, 44, 46, 6);
-      // 拱橋
-      ctx.fillStyle = '#7A8482';
+      // 江南飛簷白牆與烏篷船
+      ctx.fillStyle = isNight ? '#8B9492' : '#F6F5F0';
+      ctx.fillRect(34, 48, 38, 24);
+      ctx.fillStyle = '#262A2B';
+      ctx.fillRect(30, 44, 46, 5);
+      // 石拱橋
+      ctx.fillStyle = '#707876';
       ctx.fillRect(190, 66, 56, 8);
-      ctx.fillStyle = isNight ? '#122226' : '#567E79';
+      ctx.fillStyle = isNight ? '#122024' : '#52736E';
       ctx.beginPath();
       ctx.arc(218, 74, 14, Math.PI, 0);
       ctx.fill();
     } else if (sceneType === 'fortress') {
-      // 襄陽/城池：城牆與垛口、旌旗
-      ctx.fillStyle = isNight ? '#2E2A27' : '#8C827A';
-      ctx.fillRect(0, 56, 130, 22);
-      for (let x = 4; x < 126; x += 12) {
-        ctx.fillRect(x, 51, 7, 5);
+      ctx.fillStyle = isNight ? '#2B2522' : '#85776C';
+      ctx.fillRect(0, 55, 132, 23);
+      for (let x = 4; x < 128; x += 12) {
+        ctx.fillRect(x, 50, 7, 5);
       }
-      // 帥旗
-      ctx.fillStyle = '#8C1D3C';
-      ctx.fillRect(88, 32, 18, 10);
-      ctx.fillStyle = '#333';
-      ctx.fillRect(87, 30, 2, 24);
-      ctx.fillStyle = isNight ? '#242B24' : '#7D8C73';
+      // 城頭戰旗
+      ctx.fillStyle = '#9E2424';
+      ctx.fillRect(88, 30, 20, 11);
+      ctx.fillStyle = '#2B2118';
+      ctx.fillRect(86, 28, 2, 26);
+      ctx.fillStyle = isNight ? '#222620' : '#788268';
       ctx.fillRect(0, 74, w, 26);
     } else if (sceneType === 'desert') {
-      // 塞外大漠：沙丘與蒙古包
-      ctx.fillStyle = isNight ? '#382F24' : '#C9AE82';
+      ctx.fillStyle = isNight ? '#362C20' : '#C4A676';
       ctx.fillRect(0, 70, w, 30);
-      // 氈帳
-      ctx.fillStyle = '#E8E2D5';
+      ctx.fillStyle = '#EAE2D2';
       ctx.beginPath();
       ctx.arc(64, 70, 20, Math.PI, 0);
       ctx.fill();
-      ctx.fillStyle = '#8C1D3C';
+      ctx.fillStyle = '#9E2424';
       ctx.fillRect(58, 60, 12, 10);
     } else {
-      // 中原農田/山林古剎
-      ctx.fillStyle = isNight ? '#223026' : '#7A9A76';
+      // 中原茅屋與古松
+      ctx.fillStyle = isNight ? '#202B22' : '#748C6E';
       ctx.fillRect(0, 72, w, 28);
-      // 茅屋或山亭
-      ctx.fillStyle = '#8C6D46';
+      ctx.fillStyle = '#85653E';
       ctx.fillRect(46, 54, 32, 18);
-      ctx.fillStyle = '#5C462C';
+      ctx.fillStyle = '#4F3B22';
       ctx.beginPath();
       ctx.moveTo(40, 54);
-      ctx.lineTo(62, 40);
+      ctx.lineTo(62, 39);
       ctx.lineTo(84, 54);
       ctx.fill();
     }
 
-    // 4. 繪製主角小人與當前動作 (中景位置 x=148, y=58)
+    // 4. 繪製主角與俠侶身影
     const px = 152;
     const py = 58;
     ctx.fillStyle = '#EAC5A4';
-    ctx.fillRect(px, py, 6, 6); // 頭
-    ctx.fillStyle = (state.stats && state.stats.martial >= 40) ? '#0F6E68' : '#8C1D3C';
-    ctx.fillRect(px - 1, py + 6, 8, 11); // 身
-    ctx.fillStyle = '#1F2426';
-    ctx.fillRect(px, py - 2, 6, 2); // 髮
+    ctx.fillRect(px, py, 6, 6);
+    ctx.fillStyle = (state.stats && state.stats.martial >= 40) ? '#245C4E' : '#9E2424';
+    ctx.fillRect(px - 1, py + 6, 8, 11);
+    ctx.fillStyle = '#1E1B18';
+    ctx.fillRect(px, py - 2, 6, 2);
 
-    // 若習武或練劍，畫出手中長劍與劍氣
-    if (state.focus === 'outer' || state.focus === 'chivalry' || (state.stats && state.stats.martial >= 35)) {
-      ctx.fillStyle = '#D9DEE0';
-      ctx.fillRect(px + 8, py + 4, 14, 2);
-      ctx.fillStyle = '#D9AF59';
+    if (state.focus === 'outer' || state.focus === 'chivalry' || (state.stats && state.stats.martial >= 32)) {
+      ctx.fillStyle = '#D8DEE0';
+      ctx.fillRect(px + 8, py + 4, 15, 2);
+      ctx.fillStyle = '#C49A45';
       ctx.fillRect(px + 7, py + 2, 2, 6);
     }
 
-    // 若已成婚，身旁繪製伴侶小人
     if (state.spouse && state.spouse.alive) {
       ctx.fillStyle = '#EAC5A4';
       ctx.fillRect(px - 14, py + 1, 6, 6);
-      ctx.fillStyle = '#B5485A';
+      ctx.fillStyle = '#9E3B42';
       ctx.fillRect(px - 15, py + 7, 8, 10);
-      ctx.fillStyle = '#1F2426';
+      ctx.fillStyle = '#1E1B18';
       ctx.fillRect(px - 14, py - 1, 6, 2);
     }
   }
@@ -379,12 +414,11 @@ window.JianghuCanvas = (function () {
   };
 })();
 
-// WebAudio 古琴與洞簫雅樂合成器（免外部音檔、純程式碼生成宮商角徵羽泛音）
+// WebAudio 古琴與洞簫雅樂合成器
 window.JianghuAudio = (function () {
   let ctx = null;
   let playing = false;
   let timer = null;
-  // 古琴五聲調式頻率 (C宮 D商 E角 G徵 A羽)
   const scale = [130.81, 146.83, 164.81, 196.00, 220.00, 261.63, 293.66, 329.63, 392.00, 440.00];
 
   function init() {
