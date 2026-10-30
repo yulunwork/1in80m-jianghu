@@ -136,6 +136,17 @@
     `;
   }
 
+  function pickHumorDeathCause(region, age) {
+    const hc = DATA.HUMOR_DEATH_CAUSES;
+    if (!hc) return pick(region.causes);
+    if (age <= 5) return pick(hc.infant);
+    const le = region.leM || 45;
+    if (age >= le + 10) return pick(hc.oldAge);
+    if (region.zone === '名門世家') return pick(hc.elite);
+    if (region.zone === '江湖底層') return pick(hc.fringe);
+    return pick(hc.mortal);
+  }
+
   function generatePeers(eraObj, birthYear) {
     const peers = [];
     for (let i = 0; i < 4; i++) {
@@ -153,7 +164,7 @@
       const hasMartial = Math.random() * 100 < region.martialRate;
       const sect = hasMartial ? pick(region.sectPool) : region.stratum;
       const art = hasMartial ? pick(region.artsPool) : '無';
-      const deathCause = deathAge <= 5 ? '幼年風寒與飢饉早夭' : pick(region.causes);
+      const deathCause = pickHumorDeathCause(region, deathAge);
 
       peers.push({
         name,
@@ -223,6 +234,10 @@
       silver: Math.round(region.incomeSilver * incomeMult * 0.8),
       annualIncome: Math.round(region.incomeSilver * incomeMult * 10) / 10,
       passiveIncome: 0,
+      castrated: false,
+      blindBoxCount: 0,
+      mishapCount: 0,
+      lastBoxReport: null,
       stats: {
         health: clamp(Math.round(68 + (Math.random() - 0.4) * 24)),
         mind: clamp(Math.round(65 + (Math.random() - 0.4) * 24)),
@@ -598,7 +613,7 @@
         addFeedLog(age, `在${r.name.split(' · ')[0]}的屋簷下蹒跚學步，抓著竹蜻蜓與泥人玩耍。`, `五歲內幼童存活率 · 體魄 ${Math.round(life.stats.health)}`);
       } else if (roll < 0.55) {
         life.stats.health = clamp(life.stats.health - 5);
-        addFeedLog(age, `入冬時染上一場風寒高熱，幸得母親徹夜熬煮薑湯照料方才退燒。`, `古代小兒冬季傷寒染病率 34%`, 'bad');
+        addFeedLog(age, `入冬時染上一場風寒高熱，母親聽信赤腳大夫偏方餵你喝了半碗香灰水，竟奇蹟般退燒了。`, `古代小兒冬季傷寒染病率 34%`, 'bad');
       }
       return;
     }
@@ -606,11 +621,11 @@
     if (life.stats.martial >= 18 && life.topArt === '無' && Math.random() < 0.45) {
       life.topArt = pick(r.artsPool);
       setBadge('武');
-      addFeedLog(age, `經過日夜苦練，你終於領悟了「${life.topArt}」的精要，在同輩中嶄露頭角！`, `武學修習突破率 · 當前武學 ${Math.round(life.stats.martial)}`, 'ms');
+      addFeedLog(age, `經過日夜苦練，你終於領悟了「${life.topArt}」的精要，在村口打狗時再也沒輸過！`, `武學修習突破率 · 當前武學 ${Math.round(life.stats.martial)}`, 'ms');
       return;
     }
 
-    if (life.family.spouse && life.family.spouse.alive && age >= 20 && age <= 42 && life.family.children.length < 3 && Math.random() < 0.22) {
+    if (life.family.spouse && !life.castrated && life.family.spouse.alive && age >= 20 && age <= 42 && life.family.children.length < 4 && Math.random() < 0.22) {
       const cSex = Math.random() < 0.5 ? 'F' : 'M';
       const cName = genName(r, cSex);
       life.family.children.push({ name: cName, sex: cSex, birthAge: age });
@@ -621,21 +636,36 @@
       return;
     }
 
-    if (roll < 0.16) {
+    // 方案一：36% 機率觸發「大俠打架我買單 / 江湖路人甲荒謬際遇」
+    if (DATA.NPC_MISHAPS && roll < 0.36) {
+      const m = pick(DATA.NPC_MISHAPS);
+      const fx = m.fx || {};
+      if (fx.health)  life.stats.health  = clamp(life.stats.health + fx.health);
+      if (fx.mind)    life.stats.mind    = clamp(life.stats.mind + fx.mind);
+      if (fx.martial) life.stats.martial = clamp(life.stats.martial + fx.martial);
+      if (fx.bonds)   life.stats.bonds   = clamp(life.stats.bonds + fx.bonds);
+      if (fx.silver)  life.silver        = Math.max(0, Math.round((life.silver + fx.silver) * 10) / 10);
+      life.mishapCount = (life.mishapCount || 0) + 1;
+      if (m.badge) setBadge(m.badge);
+      addFeedLog(age, m.text, m.note, m.type || '');
+      return;
+    }
+
+    if (roll < 0.48) {
       const bonus = Math.round(r.incomeSilver * 0.4 * 10) / 10;
       life.silver = Math.round((life.silver + bonus) * 10) / 10;
       life.stats.mind = clamp(life.stats.mind + 4);
-      addFeedLog(age, `今年風調雨順，市集買賣興隆，手頭多攢下了 ${bonus} 兩紋銀。`, `地方歲收豐歉波動 · 歲入穩定`);
-    } else if (roll < 0.30) {
+      addFeedLog(age, `今年風調雨順，又沒有大俠經過拆毀街坊，市集買賣興隆，手頭多攢下了 ${bonus} 兩紋銀。`, `地方歲收豐歉波動 · 歲入穩定`);
+    } else if (roll < 0.60) {
       life.stats.health = clamp(life.stats.health - 6);
       life.silver = Math.max(0, Math.round((life.silver - 2) * 10) / 10);
       addFeedLog(age, `夏秋之交疫癘與旱情蔓延，只得節衣縮食、抓藥調理身體。`, `地方州縣災荒發生率 ${Math.round(r.warRisk * 0.8)}%`, 'bad');
-    } else if (roll < 0.44 && (life.focus === 'outer' || life.focus === 'inner' || life.stats.martial >= 25)) {
+    } else if (roll < 0.72 && (life.focus === 'outer' || life.focus === 'inner' || life.stats.martial >= 25)) {
       life.stats.martial = clamp(life.stats.martial + 3.5);
-      addFeedLog(age, `於渡口茶肆偶遇一名遊方武師，雙方點到為止切磋數招，對「${life.topArt !== '無' ? life.topArt : r.artsPool[0]}」頗有進益。`, `江湖同道切磋勝率 · 武學 ${Math.round(life.stats.martial)}`);
-    } else if (roll < 0.56) {
+      addFeedLog(age, `於渡口茶肆偶遇一名遊方武師，雙方商業互吹並切磋數招，對「${life.topArt !== '無' ? life.topArt : r.artsPool[0]}」頗有進益。`, `江湖同道切磋勝率 · 武學 ${Math.round(life.stats.martial)}`);
+    } else if (roll < 0.82) {
       life.stats.bonds = clamp(life.stats.bonds + 3);
-      addFeedLog(age, `中秋月圓之夜，與親友鄰里分食月餅、聽茶館說書人講述早年五絕與大俠的傳說。`, `常年道心安定指數 · 心境 ${Math.round(life.stats.mind)}`);
+      addFeedLog(age, `中秋月圓之夜，與鄰里分食月餅、聽茶館說書人瞎編五絕大俠的八卦緋聞。`, `常年道心安定指數 · 心境 ${Math.round(life.stats.mind)}`);
     }
   }
 
@@ -648,7 +678,7 @@
       if (Math.random() < yearlyU5Prob * (life.stats.health < 50 ? 1.3 : 0.85)) {
         return {
           died: true,
-          cause: age <= 1 ? '襁褓驚風與先天不足早夭' : '幼年高熱疫病與飢寒早夭',
+          cause: pickHumorDeathCause(r, age),
           statNote: `${r.name} 五歲以下夭折率 ${r.u5Mort}% · 戶部與歷史生命表模型`
         };
       }
@@ -657,7 +687,9 @@
     if (life.stats.health <= 2) {
       return {
         died: true,
-        cause: '氣血枯竭與沉痾宿疾併發而亡',
+        cause: life.castrated
+          ? '自宮傷口反覆感染，加上氣血枯竭含恨而終'
+          : '長期被江湖二手掌風震傷內腑，氣血枯竭而亡',
         statNote: `體魄降至臨界值 · 缺醫少藥環境致死率 92%`
       };
     }
@@ -668,7 +700,7 @@
         life.stats.health = clamp(life.stats.health - 12);
         addFeedLog(age, `遭逢強敵與兵禍伏擊，幸賴一身深厚武學（${life.topArt}）浴血殺出重圍，僅受皮肉之傷！`, `高階武學化險為夷機率 72%`, 'ms');
       } else {
-        const c = pick(r.causes);
+        const c = pickHumorDeathCause(r, age);
         return {
           died: true,
           cause: c,
@@ -684,7 +716,7 @@
       if (Math.random() < gompertzProb) {
         return {
           died: true,
-          cause: age >= le ? '壽終正寢，於榻上安詳瞑目' : pick(r.causes),
+          cause: age >= le ? pick(DATA.HUMOR_DEATH_CAUSES.oldAge) : pickHumorDeathCause(r, age),
           statNote: `${r.name} 陽壽生命表（預期壽元 ${le} 歲）· 享年 ${age} 歲`
         };
       }
@@ -768,6 +800,11 @@
     if (fx.martial) life.stats.martial = clamp(life.stats.martial + fx.martial);
     if (fx.bonds)   life.stats.bonds   = clamp(life.stats.bonds + fx.bonds);
     if (fx.silver)  life.silver        = Math.max(0, Math.round((life.silver + fx.silver) * 10) / 10);
+    if (fx.passiveIncome) {
+      life.passiveIncome += fx.passiveIncome;
+      life.sect = '日月神教 · 口號氣氛組';
+      life.topArt = '文成武德馬屁功';
+    }
 
     let extraNote = '';
     if (fx.joinSect) {
@@ -776,15 +813,35 @@
       life.family.master = { name: pick(DATA.SURNAMES) + '師父', alive: true };
       extraNote = `（正式拜入「${life.sect}」，獲傳「${life.topArt}」）`;
     }
+    if (fx.stealDuck) {
+      if (Math.random() < 0.62) {
+        life.stats.health = clamp(life.stats.health + 12);
+        life.silver = Math.round((life.silver + 6) * 10) / 10;
+        extraNote = `（大俠忙著對掌沒空理你，你白嫖了一隻脆皮烤鴨與 6 兩酒錢！）`;
+      } else {
+        life.stats.health = clamp(life.stats.health - 20);
+        extraNote = `（手剛碰到鴨屁股就被掌風震飛出二樓窗外，體魄 -20，但懷裡死死護住了半隻鴨腿！）`;
+      }
+    }
+    if (fx.tauntHeroes) {
+      life.stats.bonds = clamp(life.stats.bonds + 22);
+      life.stats.martial = clamp(life.stats.martial + 10);
+      if (life.stats.martial >= 55) {
+        extraNote = `（兩大高手被你的霸氣鎮住，竟雙雙抱拳道了一聲「閣下深藏不露」！）`;
+      } else {
+        life.stats.health = clamp(life.stats.health - 28);
+        extraNote = `（兩大高手同時停手把你揍成豬頭再繼續決鬥，體魄 -28，但你在全鎮吹了二十年牛！）`;
+      }
+    }
     if (fx.gambleManual) {
       if (Math.random() < 0.68 || life.stats.martial >= 30) {
         life.stats.martial = clamp(life.stats.martial + 22);
         life.topArt = pick(life.region.artsPool);
-        extraNote = `（奇遇大成！貫通任督二脈，武學暴漲 +22！）`;
+        extraNote = `（奇遇大成！雖然髮際線後退了兩寸，但貫通任督二脈，武學暴漲 +22！）`;
       } else {
         life.stats.health = clamp(life.stats.health - 18);
         life.stats.martial = clamp(life.stats.martial + 6);
-        extraNote = `（真氣逆行嘔血，體魄受創 -18，幸保住性命）`;
+        extraNote = `（真氣逆行嘔血，體魄受創 -18，頭髮還掉了一大把，幸保住性命）`;
       }
     }
     if (fx.marry) {
@@ -807,7 +864,7 @@
       } else {
         life.stats.health = clamp(life.stats.health - 20);
         life.stats.bonds = clamp(life.stats.bonds + 10);
-        extraNote = `（寡不敵眾身負刀傷 -20，幸得路過義士接應脫險）`;
+        extraNote = `（寡不敵眾被揍成豬頭 -20，幸得路過義士接應脫險）`;
       }
     }
     if (fx.warDefend || fx.grandBattle) {
@@ -820,7 +877,7 @@
       } else {
         life.stats.health = clamp(life.stats.health - 26);
         life.stats.bonds = clamp(life.stats.bonds + 15);
-        extraNote = `（血戰中身受重創 -26，死裡逃生）`;
+        extraNote = `（血戰中身受重創 -26，靠裝死躲在死人堆裡逃過一劫）`;
       }
     }
 
@@ -877,6 +934,23 @@
     $('refSaveBtn').addEventListener('click', () => closeRef(true));
   }
 
+  // ==================== 方案二：鬼市地攤盲盒鑑定 ＆ 九州坊市 ====================
+  function rollBlindBoxLoot(weights) {
+    const total = (weights.N || 0) + (weights.R || 0) + (weights.SR || 0) + (weights.SSR || 0);
+    let r = Math.random() * total;
+    let chosenTier = 'N';
+    for (const k of ['SSR', 'SR', 'R', 'N']) {
+      const w = weights[k] || 0;
+      if (r < w) {
+        chosenTier = k;
+        break;
+      }
+      r -= w;
+    }
+    const pool = DATA.BLIND_BOX_POOL[chosenTier] || DATA.BLIND_BOX_POOL.N;
+    return pick(pool);
+  }
+
   function openShopModal() {
     if (!life || !life.alive) return;
     const wasPaused = paused;
@@ -887,15 +961,48 @@
     modal.hidden = false;
 
     function renderShopContent() {
+      const rep = life.lastBoxReport;
+      const repColors = {
+        N:   { border: '#7A6E5D', bg: 'rgba(122,110,93,0.12)', badge: '#6E6050' },
+        R:   { border: '#245C4E', bg: 'rgba(36,92,78,0.12)',   badge: '#245C4E' },
+        SR:  { border: '#8C6224', bg: 'rgba(140,98,36,0.15)',  badge: '#8C6224' },
+        SSR: { border: '#9E2424', bg: 'rgba(158,36,36,0.16)',  badge: '#9E2424' }
+      };
+      const rc = rep ? (repColors[rep.rarity] || repColors.N) : null;
+
       modal.innerHTML = `
-        <div class="dec" role="dialog" aria-modal="true">
+        <div class="dec" style="width:min(760px,100%)" role="dialog" aria-modal="true">
           <div class="hd">
-            <span>【九州坊市 · 置產與修煉】</span>
+            <span>【🏮 鬼市地攤盲盒 ＆ 九州正經坊市】</span>
             <span>行囊盤纏：<b>${life.silver.toFixed(1)} 兩紋銀</b></span>
           </div>
-          <div class="bd">
-            <h2>藥鋪、鐵匠鋪與田契牙行</h2>
-            <p style="font-size:13.5px">在江湖裡，銀兩雖買不到天命，卻能購置良田、延醫買藥或打製神兵防身。</p>
+          <div class="bd" style="max-height:78vh;overflow-y:auto">
+            ${rep ? `
+              <div style="border:2px solid ${rc.border};background:${rc.bg};padding:12px 16px;margin-bottom:16px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                  <b style="font-family:var(--f-display);font-size:17px;color:var(--ink)">📜 鬼市開盒鑑定：${rep.name}</b>
+                  <span style="background:${rc.badge};color:#FDF8EE;padding:2px 8px;font-size:12px;font-family:var(--f-display)">${rep.rarityLabel}</span>
+                </div>
+                <p style="margin:0;font-size:13.5px;color:var(--ink)">${rep.report}</p>
+              </div>
+            ` : ''}
+
+            <h2 style="font-size:19px;margin-bottom:4px">🎲 鬼市地攤 · 泛黃秘笈與神丹盲盒（買定離手，死傷自負）</h2>
+            <p style="font-size:13px;margin-bottom:10px">九成九的江湖人一輩子沒見過真絕學，但地攤老闆發誓他這包真的是從少林寺偷出來的：</p>
+            <div class="ch" style="margin-bottom:18px">
+              ${(DATA.BLIND_BOX_TIERS || []).map((box, bidx) => {
+                const canBuy = life.silver >= box.cost;
+                return `
+                  <button type="button" class="${canBuy ? '' : 'lock'}" data-bidx="${bidx}" ${canBuy ? '' : 'disabled'} style="border-color:var(--accent)">
+                    <span class="k" style="background:var(--accent);color:#FDF8EE">${box.cost}兩</span>
+                    <b>${box.name} <span class="seal-stamp" style="margin-left:6px;font-size:11px">${box.tag}</span></b>
+                    <small>${box.desc}</small>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+
+            <h2 style="font-size:18px;margin-bottom:4px;border-top:1px dashed var(--rule);padding-top:12px">🏪 正經坊市 · 藥鋪、鐵匠鋪與田契牙行</h2>
             <div class="ch">
               ${DATA.SHOP_ITEMS.map((it, idx) => {
                 const canBuy = life.silver >= it.cost;
@@ -909,7 +1016,7 @@
               }).join('')}
             </div>
             <div style="margin-top:16px;text-align:right">
-              <button type="button" class="ghost sm" id="shopCloseBtn">離開坊市</button>
+              <button type="button" class="ghost sm" id="shopCloseBtn">收好荷包 · 離開坊市</button>
             </div>
           </div>
         </div>
@@ -921,7 +1028,45 @@
         updateSpeedUI();
       });
 
-      modal.querySelectorAll('.ch button:not(.lock)').forEach((btn) => {
+      // 購買鬼市秘笈盲盒
+      modal.querySelectorAll('.ch button[data-bidx]:not(.lock)').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const box = DATA.BLIND_BOX_TIERS[Number(btn.dataset.bidx)];
+          if (!box || life.silver < box.cost) return;
+          life.silver = Math.max(0, Math.round((life.silver - box.cost) * 10) / 10);
+          life.blindBoxCount = (life.blindBoxCount || 0) + 1;
+
+          const loot = rollBlindBoxLoot(box.weights);
+          const fx = loot.fx || {};
+          if (fx.health)  life.stats.health  = clamp(life.stats.health + fx.health);
+          if (fx.mind)    life.stats.mind    = clamp(life.stats.mind + fx.mind);
+          if (fx.martial) life.stats.martial = clamp(life.stats.martial + fx.martial);
+          if (fx.bonds)   life.stats.bonds   = clamp(life.stats.bonds + fx.bonds);
+          if (fx.silver)  life.silver        = Math.max(0, Math.round((life.silver + fx.silver) * 10) / 10);
+          if (fx.passiveIncome) life.passiveIncome += fx.passiveIncome;
+          if (fx.castrated) life.castrated = true;
+          if (fx.topArt) life.topArt = fx.topArt;
+          if (fx.weapon) life.weapon = fx.weapon;
+
+          life.lastBoxReport = loot;
+          if (life.grid.length) {
+            life.grid[life.grid.length - 1].badge = loot.rarity === 'SSR' ? '神' : (loot.rarity === 'N' ? '坑' : '奇');
+          }
+
+          addFeedLog(
+            life.age,
+            `【鬼市開盒】耗銀 ${box.cost} 兩買下${box.name}，拆開竟是${loot.rarityLabel}${loot.name}——${loot.report}`,
+            `鬼市盲盒第 ${life.blindBoxCount} 抽 · 餘銀 ${life.silver.toFixed(1)} 兩`,
+            loot.rarity === 'N' ? 'bad' : 'ms'
+          );
+          showToast(`開盒結果：${loot.rarityLabel} ${loot.name}`);
+          updateAllLifePanels();
+          renderShopContent();
+        });
+      });
+
+      // 購買正經坊市商品
+      modal.querySelectorAll('.ch button[data-sidx]:not(.lock)').forEach((btn) => {
         btn.addEventListener('click', () => {
           const item = DATA.SHOP_ITEMS[Number(btn.dataset.sidx)];
           if (life.silver < item.cost) return;
@@ -1211,6 +1356,152 @@
     };
   }
 
+  // ==================== 方案四：百曉生毒舌評語 ＆ 江湖奇葩外號生成器 ====================
+  function evaluateJianghuEpithet(l) {
+    const m = l.stats.martial;
+    const age = l.age;
+    const sil = l.silver;
+    const kids = l.family.children ? l.family.children.length : 0;
+    const cause = l.deathCause || '';
+
+    if (l.castrated) {
+      if (m >= 60) {
+        return {
+          rarity: 'SSR',
+          rarityLabel: 'SSR · 絕世狠人',
+          color: '#E0665A',
+          title: '【威震武林的九千歲廠公】',
+          roast: '別人練劍要錢，你練劍要命根子。雖然武功蓋世、繡花針下無一合之敵，但每逢夜深人靜上茅房時，總免不了蹲著流下兩行清淚。'
+        };
+      }
+      return {
+        rarity: 'R',
+        rarityLabel: 'R · 江湖大冤種',
+        color: '#D4A359',
+        title: '【白挨一刀的絕後冤大頭】',
+        roast: '刀也揮了、痛也挨了，結果發現買到的是地攤盜版食譜。武功沒練成還斷了老家香火，連閻王爺翻開生死簿都忍不住笑出聲。'
+      };
+    }
+
+    if (age <= 5) {
+      return {
+        rarity: 'N',
+        rarityLabel: 'N · 速通玩家',
+        color: '#9C8D78',
+        title: '【奈何橋孟婆湯續杯VIP】',
+        roast: '別人在江湖快意恩仇，你在陰曹地府折返跑。上一碗孟婆湯都還沒消化完，你就又排進了投胎隊伍，堪稱人間一日遊體驗卡持有者。'
+      };
+    }
+
+    if (l.topArt && l.topArt.includes('蛤蟆')) {
+      return {
+        rarity: 'SR',
+        rarityLabel: 'SR · 奇門異獸',
+        color: '#D4A359',
+        title: '【村口趴著呱呱叫的狠人】',
+        roast: '掌力確實剛猛無儔，唯一遺憾是每次對敵前都得趴在泥地上鼓腮幫子學青蛙叫。死後方圓十里的野狗跟蟾蜍都來替你送行。'
+      };
+    }
+
+    if (l.blindBoxCount >= 3 && m < 50) {
+      return {
+        rarity: 'R',
+        rarityLabel: 'R · 慈善賭王',
+        color: '#4DA892',
+        title: '【鬼市地攤防詐反面教材】',
+        roast: '全江湖的盜版秘笈跟山羊糞丸子都被你一個人包圓了。你下葬那天，鬼市地攤老闆哭得比你親生兒子還傷心，因為痛失了全年度最大金主。'
+      };
+    }
+
+    if (/喬峰|梅超風|六大派|斷劍|李莫愁|星宿|玉蜂|牌匾/.test(cause)) {
+      return {
+        rarity: 'R',
+        rarityLabel: 'R · 氣氛耗材',
+        color: '#4DA892',
+        title: '【大俠裝逼專用人肉背景板】',
+        roast: '主角們在書裡負責瀟灑帥氣、不付酒錢，而你負責在背景裡吐血飛出三條街，用寶貴的生命為大俠的掌風提供震撼視覺特效。'
+      };
+    }
+
+    if (m >= 86 && age >= 50) {
+      return {
+        rarity: 'UR',
+        rarityLabel: 'UR · 天道破格',
+        color: '#F5C451',
+        title: '【橫壓一世的六邊形真宗師】',
+        roast: '在八千萬分之一的泥沼開局裡硬生生逆天改命！百曉生翻遍了整本毒舌詞庫也沒找到黑點，只能雙手抱拳跪喊一聲：老前輩牛逼！'
+      };
+    }
+
+    if (m >= 68 && sil < 4) {
+      return {
+        rarity: 'SR',
+        rarityLabel: 'SR · 窮鬼宗師',
+        color: '#D4A359',
+        title: '【身懷絕世神功的要飯鬼】',
+        roast: '一身內力震古鑠今，結果全身上下掏不出半文銅錢買燒餅。你用親身經歷向世人證明：就算練成絕世武功，不打工一樣要餓死街頭。'
+      };
+    }
+
+    if ((sil >= 110 || l.passiveIncome >= 18) && m < 35) {
+      return {
+        rarity: 'SR',
+        rarityLabel: 'SR · 鈔能力者',
+        color: '#D4A359',
+        title: '【用銀票砸死大俠的土財主】',
+        roast: '武功再高，也怕菜刀；內力再深，見錢眼開。你一輩子懶得練拳，卻靠著收租與銀兩讓無數江湖好漢乖乖幫你看家護院。'
+      };
+    }
+
+    if (age >= 68 && m < 28) {
+      return {
+        rarity: 'SSR',
+        rarityLabel: 'SSR · 苟道至尊',
+        color: '#E0665A',
+        title: '【苟到全書大結局的活化石】',
+        roast: '打架你先跑、熱鬧你不看、客棧永遠坐離大門最近那桌。當年叱吒風雲的大俠墳頭草都三丈高了，你還在村口曬著太陽剔牙。'
+      };
+    }
+
+    if (kids >= 3 && m < 25) {
+      return {
+        rarity: 'SR',
+        rarityLabel: 'SR · 人口功臣',
+        color: '#D4A359',
+        title: '【大宋皇家認證人肉播種機】',
+        roast: '什麼華山論劍、九陰真經與你毫無關係。你在自家炕頭上的戰績遠勝江湖豪傑，憑一己之力扛起了大宋戶部的人口增長指標。'
+      };
+    }
+
+    if (!l.family.spouse && age >= 35) {
+      return {
+        rarity: 'R',
+        rarityLabel: 'R · 孤狼劍客',
+        color: '#4DA892',
+        title: '【憑實力單身的紅塵絕緣體】',
+        roast: '心中無男女，拔劍自然神。你成功避開了所有紅塵情劫與彩禮開銷，把一輩子的溫柔都獻給了手裡的農具與鐵劍。'
+      };
+    }
+
+    if (m >= 38) {
+      return {
+        rarity: 'R',
+        rarityLabel: 'R · 江湖莽夫',
+        color: '#4DA892',
+        title: '【一言不合就掀桌的狠角色】',
+        roast: '半生提刀走江湖，砍翻過幾個不長眼的小流氓，也挨過幾頓社會毒打。雖未名列五絕，倒也算沒白來這腥風血雨的人間瀟灑一回。'
+      };
+    }
+
+    return {
+      rarity: 'N',
+      rarityLabel: 'N · 芸芸眾生',
+      color: '#9C8D78',
+      title: '【湊齊八千萬分之一的背景板】',
+      roast: '不曾見過少林武當的絕頂風景，也沒買到過逆天改命的真秘笈。你就像黃河岸邊的一株野麥，在雞毛蒜皮與鹹菜白粥裡走完了真實的一生。'
+    };
+  }
+
   function closeEndingShowDeathCert() {
     $('endingOverlay').hidden = true;
     $('lifeview').hidden = true;
@@ -1221,6 +1512,8 @@
     const realm = getRealm(life.stats.martial);
     const homeObj = DATA.REAL_HOMES.find((h) => h.id === cfg.home) || DATA.REAL_HOMES[0];
     const survAtDeath = calcSurvivalRate(r, life.sex, life.age);
+    const ep = evaluateJianghuEpithet(life);
+    life.epithet = ep;
 
     const all5 = [
       {
@@ -1245,7 +1538,7 @@
 
     const refEntries = Object.entries(life.reflections);
 
-    // 全新三欄式「中軸石碑 ＋ 左右雙翼列傳」版面配置
+    // 全新三欄式「中軸石碑（含百曉生毒舌封號榜）＋ 左右雙翼列傳」版面配置
     $('dead').innerHTML = `
       <div class="stele-layout">
         <!-- 左翼：同辰降生五人命途榜 -->
@@ -1272,7 +1565,7 @@
           ` : ''}
         </div>
 
-        <!-- 中央矗立：石碑拓印本傳 -->
+        <!-- 中央矗立：石碑拓印本傳 ＋ 百曉生毒舌封號牌 -->
         <div class="stele-center">
           <div class="stele-head">百曉生武林譜 · 第 ${life.serial} 卷</div>
           <div style="font-size:13px;color:#B5A792">${life.eraObj.name}（${life.birthYear}–${life.birthYear + life.age}）</div>
@@ -1280,9 +1573,19 @@
           <div><span class="seal-stamp" style="color:#E0665A;border-color:#E0665A">${realm.name} · 享年 ${life.age} 歲</span></div>
           <div class="stele-cause">終局：${life.deathCause}</div>
 
+          <!-- 方案四：百曉生蓋棺奇葩外號與毒舌評語盒 -->
+          <div style="margin:14px 0;padding:14px 16px;background:rgba(212,163,89,0.1);border:2px solid ${ep.color};text-align:left">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:12px;color:#D4A359;letter-spacing:0.12em">🪪 百曉生蓋棺認證外號</span>
+              <span style="background:${ep.color};color:#161311;font-weight:900;font-size:11.5px;padding:2px 8px;font-family:var(--f-mono)">${ep.rarityLabel}</span>
+            </div>
+            <div style="font-family:var(--f-display);font-size:22px;font-weight:700;color:#FDF8EE;margin-bottom:6px">${ep.title}</div>
+            <p style="margin:0;font-size:13.5px;color:#DFD5C2;line-height:1.6"><b>毒舌銳評：</b>「${ep.roast}」</p>
+          </div>
+
           <div class="stele-bio">
-            <b>太史公／百曉生曰：</b>${life.name}者，${r.name.split(' · ')[0]}人氏，生於${life.familyTier}。生平歷 ${life.age} 載寒暑，終老時名列「<b>${life.sect}</b>」，武學修為臻至「<b>${realm.name}</b>」（所習絕藝：${life.topArt}）。
-            考諸戶部清冊，同歲降生於當地之孩童，僅 <b>${survAtDeath}%</b> 能活至此壽數。一世浮沉，盡歸塵土。
+            <b>太史公考據：</b>${life.name}者，${r.name.split(' · ')[0]}人氏，生於${life.familyTier}。生平歷 ${life.age} 載寒暑，終老時名列「<b>${life.sect}</b>」，武學修為臻至「<b>${realm.name}</b>」（絕藝：${life.topArt}）。
+            生平共遭大俠波及 <b>${life.mishapCount || 0}</b> 次、於鬼市開盲盒 <b>${life.blindBoxCount || 0}</b> 次。同歲降生於當地之孩童，僅 <b>${survAtDeath}%</b> 能活至此壽數。
           </div>
 
           <div class="stele-metrics">
@@ -1293,15 +1596,15 @@
           </div>
 
           <div style="text-align:left;margin-top:14px">
-            <label for="fwInput" style="font-size:12px;color:#D4A359;display:block;margin-bottom:4px">銘刻石碑墓誌銘（將立碑於首頁「忠烈碑林」）：</label>
-            <textarea id="fwInput" rows="2" style="width:100%;background:#12100E;color:#EAE0CC;border:1px solid #5C4932;padding:8px;font:inherit;font-size:13.5px" placeholder="如：仗劍行千里，歸來仍是黃河岸邊的少年..."></textarea>
+            <label for="fwInput" style="font-size:12px;color:#D4A359;display:block;margin-bottom:4px">銘刻石碑墓誌銘（將連同外號立碑於首頁「忠烈碑林」）：</label>
+            <textarea id="fwInput" rows="2" style="width:100%;background:#12100E;color:#EAE0CC;border:1px solid #5C4932;padding:8px;font:inherit;font-size:13.5px" placeholder="如：下輩子投胎絕不去洛陽酒樓端菜了..."></textarea>
             <button type="button" class="cta sm" id="saveMemoBtn" style="width:100%;margin-top:6px">銘刻立碑入祠</button>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:8px;margin-top:18px;padding-top:16px;border-top:1px dashed rgba(212,163,89,0.3)">
             <button type="button" class="cta" id="rebirthBtn">【再入江湖輪迴（重新落子）】</button>
             <div style="display:flex;gap:8px">
-              <button type="button" class="ghost sm" id="shareDeadCardBtn" style="flex:1;background:#2A231B;color:#EAE0CC">下載古籍列傳圖卡</button>
+              <button type="button" class="ghost sm" id="shareDeadCardBtn" style="flex:1;background:#2A231B;color:#EAE0CC">下載「百曉生懸賞鑑定卡」</button>
               <button type="button" class="ghost sm" id="backIntroBtn" style="flex:1;background:#2A231B;color:#EAE0CC">返回案頭首頁</button>
             </div>
           </div>
@@ -1337,7 +1640,7 @@
     });
 
     $('saveMemoBtn').addEventListener('click', () => {
-      const q = $('fwInput').value.trim() || `生於${r.name}，走過一場無悔江湖。`;
+      const q = $('fwInput').value.trim() || ep.roast;
       let saved = [];
       try {
         saved = JSON.parse(localStorage.getItem('jh_memorials') || '[]');
@@ -1346,7 +1649,7 @@
         name: life.name,
         span: `${life.birthYear}–${life.birthYear + life.age} · 享年${life.age}歲`,
         origin: r.name,
-        realm: `${getRealm(life.stats.martial).name} · ${life.sect}`,
+        realm: `${getRealm(life.stats.martial).name} · ${ep.title}`,
         cause: life.deathCause,
         quote: q,
         incense: 1
@@ -1354,7 +1657,7 @@
       localStorage.setItem('jh_memorials', JSON.stringify(saved.slice(0, 20)));
       $('saveMemoBtn').disabled = true;
       $('saveMemoBtn').textContent = '已立碑入祠';
-      showToast('已將墓誌銘立碑於首頁「忠烈碑林」！');
+      showToast('已將墓誌銘與江湖外號立碑於首頁「忠烈碑林」！');
     });
 
     $('rebirthBtn').addEventListener('click', startBirthRoll);
@@ -1370,6 +1673,7 @@
 
   function savePastLifeRecord() {
     if (!life) return;
+    const ep = evaluateJianghuEpithet(life);
     let past = [];
     try {
       past = JSON.parse(localStorage.getItem('jh_past_lives') || '[]');
@@ -1381,76 +1685,126 @@
       birthYear: life.birthYear,
       eraShort: life.eraObj.short,
       regionName: life.region.name,
-      sect: life.sect,
+      sect: `${life.sect} ${ep.title}`,
       realm: getRealm(life.stats.martial).name,
       deathCause: life.deathCause
     });
     localStorage.setItem('jh_past_lives', JSON.stringify(past.slice(0, 30)));
   }
 
+  function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight) {
+    const chars = Array.from(text);
+    let line = '';
+    let curY = y;
+    for (let i = 0; i < chars.length; i++) {
+      const testLine = line + chars[i];
+      if (ctx.measureText(testLine).width > maxWidth && line.length > 0) {
+        ctx.fillText(line, x, curY);
+        line = chars[i];
+        curY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    if (line) ctx.fillText(line, x, curY);
+    return curY;
+  }
+
   function exportShareCard(isDead = false) {
     if (!life) return;
     const cv = document.createElement('canvas');
-    cv.width = 740;
-    cv.height = 430;
+    cv.width = 760;
+    cv.height = 480;
     const ctx = cv.getContext('2d');
 
     ctx.fillStyle = '#F6F0E0';
-    ctx.fillRect(0, 0, 740, 430);
+    ctx.fillRect(0, 0, 760, 480);
     ctx.strokeStyle = '#8C6224';
     ctx.lineWidth = 3;
-    ctx.strokeRect(12, 12, 716, 406);
+    ctx.strokeRect(12, 12, 736, 456);
     ctx.lineWidth = 1;
-    ctx.strokeRect(17, 17, 706, 396);
+    ctx.strokeRect(17, 17, 726, 446);
 
-    ctx.fillStyle = isDead ? '#221E1B' : '#4A3728';
-    ctx.fillRect(18, 18, 704, 52);
+    ctx.fillStyle = isDead ? '#1F1A16' : '#4A3728';
+    ctx.fillRect(18, 18, 724, 54);
 
     ctx.fillStyle = '#F5E8C7';
     ctx.font = 'bold 21px "Noto Serif TC", serif';
-    ctx.fillText(isDead ? '《江湖蒼生錄 · 蓋棺武林列傳》' : '《江湖蒼生錄 · 官府出生戶帖》', 32, 51);
+    ctx.fillText(isDead ? '《江湖蒼生錄 · 百曉生蓋棺鑑定懸賞令》' : '《江湖蒼生錄 · 官府出生戶帖》', 30, 52);
     ctx.font = '13px "Noto Serif TC", serif';
-    ctx.fillText(`百曉生卷宗字號 第 ${life.serial} 號`, 520, 50);
+    ctx.fillText(`卷宗字號 第 ${life.serial} 號`, 570, 51);
 
-    ctx.fillStyle = '#1C1814';
-    ctx.font = 'bold 36px "Noto Serif TC", serif';
-    const title = isDead
-      ? `${life.name}（享年 ${life.age} 歲 · ${getRealm(life.stats.martial).name}）`
-      : `${life.name}（降生於 ${life.region.name}）`;
-    ctx.fillText(title, 34, 122);
-
-    ctx.fillStyle = '#245C4E';
-    ctx.font = 'bold 17px "Noto Serif TC", serif';
-    ctx.fillText(`${life.eraObj.name} · 門第：${life.familyTier}（命格比重 ${life.birthProb.toFixed(2)}%）`, 34, 158);
-
-    ctx.fillStyle = '#4A4035';
-    ctx.font = '16px "Noto Serif TC", serif';
     if (isDead) {
-      ctx.fillText(`師承與營生：${life.sect}  ｜  成名絕藝：${life.topArt}`, 34, 202);
-      ctx.fillText(`蓋棺終局：${life.deathCause}`, 34, 236);
-      ctx.fillText(`蓋棺四維：體魄 ${Math.round(life.stats.health)} · 心境 ${Math.round(life.stats.mind)} · 武學 ${Math.round(life.stats.martial)} · 情義 ${Math.round(life.stats.bonds)}`, 34, 270);
+      const ep = life.epithet || evaluateJianghuEpithet(life);
+      // 稀有度標籤與外號大字
+      ctx.fillStyle = '#9E2424';
+      ctx.fillRect(32, 88, 130, 28);
+      ctx.fillStyle = '#FDF8EE';
+      ctx.font = 'bold 14px "Noto Serif TC", serif';
+      ctx.fillText(ep.rarityLabel, 42, 107);
+
+      ctx.fillStyle = '#1C1814';
+      ctx.font = 'bold 30px "Noto Serif TC", serif';
+      ctx.fillText(`${life.name}（享年 ${life.age} 歲 · ${getRealm(life.stats.martial).name}）`, 174, 112);
+
+      // 奇葩外號橫幅
+      ctx.fillStyle = '#EFE5CE';
+      ctx.fillRect(32, 128, 696, 98);
+      ctx.strokeStyle = '#8C6224';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(32, 128, 696, 98);
+
+      ctx.fillStyle = '#9E2424';
+      ctx.font = 'bold 24px "Noto Serif TC", serif';
+      ctx.fillText(`蓋棺封號：${ep.title}`, 46, 160);
+
+      ctx.fillStyle = '#3B3228';
+      ctx.font = '14.5px "Noto Serif TC", serif';
+      wrapCanvasText(ctx, `百曉生毒舌銳評：「${ep.roast}」`, 46, 188, 665, 22);
+
+      ctx.fillStyle = '#245C4E';
+      ctx.font = 'bold 15.5px "Noto Serif TC", serif';
+      ctx.fillText(`出身：${life.region.name}（比重 ${life.birthProb.toFixed(2)}%） ｜ 門牆：${life.sect} ｜ 絕藝：${life.topArt}`, 32, 256);
+
+      ctx.fillStyle = '#9E2424';
+      ctx.font = 'bold 15.5px "Noto Serif TC", serif';
+      wrapCanvasText(ctx, `離奇死因：${life.deathCause}`, 32, 286, 560, 22);
+
+      ctx.fillStyle = '#4A4035';
+      ctx.font = '15px "Noto Serif TC", serif';
+      ctx.fillText(`蓋棺四維：體魄 ${Math.round(life.stats.health)} · 心境 ${Math.round(life.stats.mind)} · 武學 ${Math.round(life.stats.martial)} · 情義 ${Math.round(life.stats.bonds)}（鬼市盲盒 ${life.blindBoxCount || 0} 抽）`, 32, 348);
     } else {
-      ctx.fillText(`當地預期陽壽：男 ${life.region.leM} 歲 / 女 ${life.region.leF} 歲 · 五歲內夭折率 ${life.region.u5Mort}%`, 34, 202);
-      ctx.fillText(`當地習武入流率：${life.region.martialRate}% · 流傳武學：${life.region.artsPool.join('、')}`, 34, 236);
+      ctx.fillStyle = '#1C1814';
+      ctx.font = 'bold 34px "Noto Serif TC", serif';
+      ctx.fillText(`${life.name}（降生於 ${life.region.name}）`, 34, 124);
+
+      ctx.fillStyle = '#245C4E';
+      ctx.font = 'bold 17px "Noto Serif TC", serif';
+      ctx.fillText(`${life.eraObj.name} · 門第：${life.familyTier}（命格比重 ${life.birthProb.toFixed(2)}%）`, 34, 162);
+
+      ctx.fillStyle = '#4A4035';
+      ctx.font = '16px "Noto Serif TC", serif';
+      ctx.fillText(`當地預期陽壽：男 ${life.region.leM} 歲 / 女 ${life.region.leF} 歲 · 五歲內夭折率 ${life.region.u5Mort}%`, 34, 206);
+      ctx.fillText(`當地習武入流率：${life.region.martialRate}% · 流傳武學：${life.region.artsPool.join('、')}`, 34, 240);
     }
 
     ctx.strokeStyle = '#9E2424';
     ctx.lineWidth = 2.5;
-    ctx.strokeRect(618, 315, 76, 76);
+    ctx.strokeRect(634, 360, 78, 78);
     ctx.fillStyle = '#9E2424';
     ctx.font = 'bold 20px "Noto Serif TC", serif';
-    ctx.fillText('江湖', 636, 348);
-    ctx.fillText('百曉', 636, 376);
+    ctx.fillText('百曉', 652, 394);
+    ctx.fillText('勘合', 652, 422);
 
     ctx.fillStyle = '#6E6050';
     ctx.font = '14px "Noto Serif TC", serif';
-    ctx.fillText('《江湖蒼生錄 · 八千萬眾》— 金庸武俠人間模擬', 34, 386);
+    ctx.fillText('《江湖蒼生錄 · 八千萬眾》— 致敬 1in8b.life 金庸武俠荒誕人間模擬', 32, 434);
 
     const link = document.createElement('a');
-    link.download = `jianghu_${life.serial}_${isDead ? 'biography' : 'birth'}.png`;
+    link.download = `jianghu_${life.serial}_${isDead ? 'epithet' : 'birth'}.png`;
     link.href = cv.toDataURL('image/png');
     link.click();
-    showToast('已拓印並下載古籍圖卡！');
+    showToast('已拓印並下載「百曉生鑑定圖卡」！');
   }
 
   function openAllRegionsModal() {
